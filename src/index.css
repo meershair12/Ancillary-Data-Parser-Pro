@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+.MuiDataGrid-main > :last-child {
+  display: none !important;
+}
