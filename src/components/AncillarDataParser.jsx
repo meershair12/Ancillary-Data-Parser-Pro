@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     ThemeProvider,
     createTheme,
@@ -21,7 +21,7 @@ import {
     InputAdornment
 } from '@mui/material';
 import * as XLSX from 'xlsx';
-import { FileSpreadsheet, MapPin } from 'lucide-react';
+import { CheckCircleIcon, FileSpreadsheet, MapPin, Trash2 } from 'lucide-react';
 
 import { DataGridPro } from '@mui/x-data-grid-pro';
 import {
@@ -36,9 +36,14 @@ import {
     CheckCircle,
     Close
 } from '@mui/icons-material';
-import clsx from 'clsx';
 import ProfessionalFooter from './Footer';
 import logo from "./logo.png"
+import LoadingModal from './ProgressLoader';
+import { parseAncillaryDataAsync } from './utils';
+import FloatingDeleteButton from './FloatingDeleteButton';
+
+import { ToastContainer, toast } from 'react-toastify';
+
 // Dark theme configuration
 const darkTheme = createTheme({
     palette: {
@@ -64,111 +69,6 @@ const darkTheme = createTheme({
         },
     },
 });
-function excelDateToEST(excelSerialDate) {
-    // Use 1899-12-31 as the correct base date
-    const utcDate = new Date(Date.UTC(1899, 11, 31) + excelSerialDate * 86400000);
-
-    // Convert to EST or EDT depending on date
-    const estDate = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/New_York',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).format(utcDate);
-
-    return estDate;
-}
-// Parse function (your existing logic)
-function parseAncillaryData(rawRows, stateCode) {
-    const bloodTests = [
-        "Comprehensive metabolic 2000 panel - Serum or Plasma",
-        "Hemoglobin A1c/Hemoglobin.total in Blood",
-        "CBC W Auto Differential panel - Blood",
-        "Vitamin D+Metabolites [Mass/volume] in Serum or Plasma",
-        "Iron [Mass/volume] in Serum or Plasma",
-        "Magnesium [Mass/volume] in Serum or Plasma",
-        "Prealbumin [Mass/volume] in Serum or Plasma"
-    ];
-
-    const parsedGeneral = [];
-    const parsedTherapies = [];
-
-    let currentPhysician = "";
-    let currentPatient = "";
-    let currentMRN = "";
-    let currentCategory = "";
-
-    for (let i = 8; i < rawRows.length; i++) {
-        const row = Array.from({ length: 5 }, (_, idx) => rawRows[i]?.[idx] ? String(rawRows[i][idx]).trim() : "");
-        const firstCell = row[0];
-
-        if (!firstCell) continue;
-
-        // Physician name
-        if (firstCell.includes(",") && !firstCell.includes("(M") && !row[1]) {
-            currentPhysician = firstCell;
-        }
-        // Patient & MRN
-        else if (firstCell.includes("(M")) {
-            currentPatient = firstCell.split(" (M")[0];
-            currentMRN = "M" + firstCell.match(/\(M(.*?)\)/)?.[1] || "";
-        }
-        // Category like "Devices"
-        else if (firstCell && (!row[1] && !row[2] || firstCell.toUpperCase().includes("DEVICE"))) {
-            currentCategory = firstCell;
-        }
-        // Test descriptor
-        else if (firstCell && currentPatient && currentMRN) {
-            const descriptor = firstCell;
-            let dateOrdered = row[2] || row[3] || "";
-            dateOrdered = excelDateToEST(dateOrdered);
-            if (!descriptor || !dateOrdered) continue;
-
-            const isBloodTest = bloodTests.includes(descriptor);
-            const finalDescriptor = isBloodTest ? "General Blood Work" : descriptor;
-
-            const uid = `${currentMRN}_${finalDescriptor}_${currentPhysician}_${dateOrdered}`;
-
-            const record = {
-                id: i - 7,
-                patientName: currentPatient.trim(),
-                mrn: currentMRN.trim(),
-                category: currentCategory.trim(),
-                testName: finalDescriptor.trim(),
-                physician: currentPhysician.trim(),
-                dateOrdered,
-                state: stateCode.trim(),
-                uid: uid.trim()
-            };
-
-            if (currentCategory.toUpperCase() === "OTHER SERVICES AND THERAPIES" && descriptor.toUpperCase() === "DEBRIDEMENT") {
-                parsedTherapies.push(record);
-            } else {
-                parsedGeneral.push(record);
-            }
-        }
-    }
-
-
-    // Deduplicate by UID
-    const unique = (arr) => {
-        const seen = new Set();
-        return arr.filter(item => {
-            if (seen.has(item.uid)) return false;
-            seen.add(item.uid);
-            return true;
-        });
-    };
-    return {
-        parsedGeneral: unique(parsedGeneral),
-        parsedTherapies: unique(parsedTherapies),
-        summary: {
-            generalCount: parsedGeneral.length,
-            therapiesCount: parsedTherapies.length,
-            totalCount: parsedGeneral.length + parsedTherapies.length
-        }
-    };
-}
 
 
 // File upload component
@@ -205,8 +105,8 @@ function FileUpload({ onFileUpload, loading }) {
     return (
         <Paper
             className={`relative border-2 border-dashed transition-all text-center duration-300 ${dragActive
-                ? 'border-cyan-400 bg-cyan-400/10'
-                : 'border-gray-600 hover:border-cyan-500'
+                ? 'border-green-400 bg-green-400/10'
+                : 'border-green-600 hover:border-green-500'
                 }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -216,7 +116,7 @@ function FileUpload({ onFileUpload, loading }) {
         >
             {loading && <LinearProgress className="absolute top-0 left-0 right-0" />}
             <span>
-                <CloudUpload sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+                <CloudUpload className='text-green-700' sx={{ fontSize: 64, mb: 2 }} />
             </span>
 
             <Typography variant="h6" className="mb-2">
@@ -230,6 +130,7 @@ function FileUpload({ onFileUpload, loading }) {
             <Button
                 variant="contained"
                 component="label"
+                color='success'
                 startIcon={<Description />}
                 disabled={loading}
                 className="mx-auto"
@@ -254,53 +155,6 @@ function FileUpload({ onFileUpload, loading }) {
     );
 }
 
-// Stats cards component
-// function StatsCards({ summary }) {
-//     const stats = [
-//         {
-//             title: 'Total Records',
-//             value: summary?.totalCount || 0,
-//             icon: <Assessment />,
-//             color: 'primary'
-//         },
-//         {
-//             title: 'General Tests',
-//             value: summary?.generalCount || 0,
-//             icon: <LocalHospital />,
-//             color: 'secondary'
-//         },
-//         {
-//             title: 'Therapies',
-//             value: summary?.therapiesCount || 0,
-//             icon: <Person />,
-//             color: 'success'
-//         }
-//     ];
-
-//     return (
-//         <Grid container spacing={3} className="mb-6">
-//             {stats.map((stat, index) => (
-//                 <Grid item xs={12} md={4} key={index}>
-//                     <Card className="h-full">
-//                         <CardContent className="flex items-center justify-between">
-//                             <Box>
-//                                 <Typography color="textSecondary" gutterBottom variant="overline">
-//                                     {stat.title}
-//                                 </Typography>
-//                                 <Typography variant="h4" component="div">
-//                                     {stat.value}
-//                                 </Typography>
-//                             </Box>
-//                             <Box className="text-cyan-400">
-//                                 {stat.icon}
-//                             </Box>
-//                         </CardContent>
-//                     </Card>
-//                 </Grid>
-//             ))}
-//         </Grid>
-//     );
-// }
 
 function StatsCards({ summary }) {
     const stats = [
@@ -343,10 +197,10 @@ function StatsCards({ summary }) {
     ];
 
     return (
-        <Grid container spacing={3} className="mb-6">
+        <Grid container spacing={3} className="mb-6 mr-4">
             {stats.map((stat, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                    <Card className="h-full " sx={{ borderRadius: '10px', width: 320 }}>
+                <Grid item size={{ xs: 12, md: 5, lg: 4 }} key={index}>
+                    <Card className="h-full " sx={{ borderRadius: '10px', width: "100%" }}>
                         <CardContent className="flex items-center justify-between">
                             <Box className="flex-1 text-left">
                                 <Typography color="textSecondary" gutterBottom variant="overline" className='text-left'>
@@ -377,6 +231,8 @@ function StatsCards({ summary }) {
     );
 }
 
+
+
 // Main component
 export default function AncillaryDataParser() {
     const [data, setData] = useState(null);
@@ -386,20 +242,129 @@ export default function AncillaryDataParser() {
     const [fileName, setFileName] = useState('');
     const [open, setOpen] = useState(false);
     const [stateAbbr, setStateAbbr] = useState('');
+    const [progress, setProgress] = useState(0);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [processStart, setProcessStart] = useState(false);
     const [dateRange, setDateRange] = useState({
         startDate: null,
         endDate: null
     });
+    const [isSelect, setIsSelect] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedIds, setSelectedIds] = React.useState({
+        type: 'include',
+        ids: new Set(),
+    });
+    const [stateProgress, setStateProgress] = useState(0);
+
+    const handleDelete = async () => {
+        try {
+
+            setIsDeleting(true);
+
+            // Filter out selected rows
+            let updatedRows = data
+
+            if (activeTab == "general") updatedRows.parsedGeneral = data.parsedGeneral.filter((row) => !selectedIds.ids.has(row.id));
+            if (activeTab == "therapies") updatedRows.parsedTherapies = data.parsedTherapies.filter((row) => !selectedIds.ids.has(row.id));
+
+
+
+
+            // Simulate small delay (optional, for UX)
+            await new Promise((resolve) => setTimeout(resolve, 300));
+
+            setIsDeleting(false)
+
+            // Update rows
+            setData(updatedRows);
+
+            // Reset selection
+            setSelectedIds({ type: 'include', ids: new Set() });
+
+
+
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error(<div className="flex items-center gap-2">
+                <XCircle size={20} className="text-red-600" />
+                Failed to delete rows!
+            </div>, {
+                position: "top-center",
+                autoClose: 2000,
+                theme: "dark",
+                hideProgressBar: true,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            setIsDeleting(false)
+        } finally {
+
+
+            toast.success(<div className="flex items-center gap-2">
+                <Trash2 size={20} className="text-green-600" />
+                Deleted successfully!
+            </div>, {
+                position: "top-center",
+                theme: "dark",
+                autoClose: 2000,
+                hideProgressBar: true,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
+            setIsSelect(false)
+            setIsDeleting(false);
+        }
+    };
+    const currentData = data
+        ? (activeTab === 'general' ? data.parsedGeneral : data.parsedTherapies)
+        : [];
+    const [sortModel, setSortModel] = useState([]);
+    const handleSortModelChange = useCallback((model) => {
+        setSortModel(model);
+
+        if (model.length === 0) return; // no sort
+
+        const { field, sort } = model[0];
+
+        const sortedRows = activeTab == "general" ? [...data.parsedGeneral].sort((a, b) => {
+            const aValue = a[field];
+            const bValue = b[field];
+
+            if (aValue < bValue) return sort === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sort === 'asc' ? 1 : -1;
+            return 0;
+        }) : [...data.parsedTherapies].sort((a, b) => {
+            const aValue = a[field];
+            const bValue = b[field];
+
+            if (aValue < bValue) return sort === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sort === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        const finalData = {}
+        if (activeTab == "general") finalData.parsedGeneral = sortedRows
+        if (activeTab == "therapies") finalData.parsedTherapies = sortedRows
+
+        setData({ ...data, ...finalData });
+    }, [data]);
+
+
     const columns = [
         {
             field: 'patientName',
             headerName: 'Patient Name',
-            width: 200,
+            width: 250,
             editable: true,
+
             renderCell: (params) => (
                 <Box className="flex items-center">
-                    <Person className="mr-2 text-cyan-400" fontSize="small" />
+                    <Person className="mr-2 text-gray-400" fontSize="small" />
                     {params.value}
                 </Box>
             )
@@ -414,7 +379,7 @@ export default function AncillaryDataParser() {
             width: 150,
             renderCell: (params) => (
                 <Box className="flex items-center">
-                    <DateRange className="mr-2 text-cyan-400" fontSize="small" />
+                    <DateRange className="mr-2 text-gray-400" fontSize="small" />
                     {params.value}
                 </Box>
             ),
@@ -422,7 +387,7 @@ export default function AncillaryDataParser() {
             editable: true,
         },
         { field: 'state', headerName: 'State', width: 100, editable: true, },
-        { field: 'uid', headerName: 'UID', width: 300 }
+        { field: 'uid', headerName: 'UID', width: 850 }
     ];
 
     const handleFileUpload = async (file) => {
@@ -431,6 +396,7 @@ export default function AncillaryDataParser() {
         setFileName(file.name);
         setSelectedFile(file)
         setOpen(true)
+        setProcessStart(false)
 
     };
     const handleConfirm = async () => {
@@ -445,24 +411,60 @@ export default function AncillaryDataParser() {
 
                 // Convert worksheet to a 2D array
                 const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                const [startDate, endDate] = rows[0][rows[0].length-1].split("-")
+                const [startDate, endDate] = rows[0][rows[0].length - 1].split("-")
                 setDateRange({
                     startDate: startDate,
                     endDate: endDate
                 })
                 // Assuming state code extraction logic or default
                 const stateCode = stateAbbr.toUpperCase(); // Update based on actual file logic
-                const parsed = parseAncillaryData(rows, stateCode);
-                setData(parsed);
+
+                parseAncillaryDataAsync(rows, stateCode, (progress) => {
+
+                    if (!processStart) setProcessStart(true)
+                    setProgress(progress)
+
+                }).then(async (result) => {
+                    setData(result);
+
+                    toast.success(
+                        <div className="flex items-start space-x-3 text-white">
+
+                            <div>
+                                <div className="font-bold text-md text-gray-300">Duplicates Ultramist Records Removed by MRN</div>
+                                <div className="text-sm mt-1 text-gray-400">
+                                    Only the latest order has been kept. All other duplicates have been removed. Thank you.
+                                </div>
+                            </div>
+                        </div>,
+                        {
+                            className: "bg-gray-900 rounded-lg shadow-lg px-4 py-3",
+                            position: "top-center",
+                            autoClose: 4000,
+                            hideProgressBar: true,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            theme: "dark"
+                        }
+                    );
+                    setProcessStart(false)
+                });
+
             } catch (err) {
                 setError('Error parsing file: ' + err.message);
+                setProcessStart(false)
+                setLoading(false);
             } finally {
+                setProcessStart(false)
                 setLoading(false);
             }
             // Close modal and reset
             setOpen(false);
         }
     };
+
+
     const handleStateChange = (event) => {
         const value = event.target.value.toUpperCase();
         if (value.length <= 2) {
@@ -476,7 +478,9 @@ export default function AncillaryDataParser() {
         setLoading(false)
         setSelectedFile(null);
         handleReset()
+        setProcessStart(false)
     };
+
 
     const modalStyle = {
         position: 'absolute',
@@ -497,12 +501,12 @@ export default function AncillaryDataParser() {
         setFileName('');
         setError(null);
         setStateAbbr('');
+
+        setProcessStart(false)
         setActiveTab('general');
     };
 
-    const currentData = data
-        ? (activeTab === 'general' ? data.parsedGeneral : data.parsedTherapies)
-        : [];
+
 
 
 
@@ -534,9 +538,77 @@ export default function AncillaryDataParser() {
         };
     }
 
+
+    const updateStatesAsync = async (newValue) => {
+        const total = data.parsedGeneral.length + data.parsedTherapies.length;
+        let processed = 0;
+        const chunkSize = 100; // ✅ Tune for speed vs responsiveness
+      
+        // Clone data once (deep enough to allow mutation)
+        let updatedGeneral = data.parsedGeneral.map((r) => ({ ...r }));
+        let updatedTherapies = data.parsedTherapies.map((r) => ({ ...r }));
+      
+        // Process in chunks
+        for (let start = 0; start < total; start += chunkSize) {
+          const end = Math.min(start + chunkSize, total);
+      
+          for (let i = start; i < end; i++) {
+            if (i < updatedGeneral.length) {
+              updatedGeneral[i].state = newValue;
+            } else {
+              updatedTherapies[i - updatedGeneral.length].state = newValue;
+            }
+            processed++;
+          }
+      
+          // Update state once per chunk (fast!)
+          setData({
+            parsedGeneral: updatedGeneral,
+            parsedTherapies: updatedTherapies,
+          });
+      
+          // Update progress bar
+          const percent = ((processed / total) * 100).toFixed(2);
+          setStateProgress(percent);
+      
+          // Let UI breathe
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      };
+      
+      
+    
+    
+
+    const [inputValue, setInputValue] = useState('');
+    const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  
+    const handleInputChange = (e) => {
+        setStateProgress(0)
+      // Allow only alphabetic characters
+      const filteredValue = e.target.value.replace(/[^a-zA-Z]/g, '');
+      if(filteredValue.length <=2){
+          setInputValue(filteredValue.toLocaleUpperCase());
+          setIsButtonDisabled(filteredValue.length === 0);
+          
+        }
+    };
+    
+    const handleSubmitStateChange = () => {
+        // Here you can call your function with the input value 
+        updateStatesAsync(inputValue.toLocaleUpperCase());
+      
+      // Optional: Clear input after submission
+      // setInputValue('');
+      // setIsButtonDisabled(true);
+    };
+
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
+            <ToastContainer />
+            {processStart && <LoadingModal progress={progress} />}
+
             <div className="min-h-screen bg-[#0A0A0A]">
                 <Container maxWidth="xl" className="py-8">
                     {/* Header */}
@@ -546,10 +618,10 @@ export default function AncillaryDataParser() {
                             <div className='text-left'>
                                 <Typography className='uppercase m-0 p-0 text-sm text-muted-foreground font-bold'><b>Personic Health</b></Typography>
                                 {/* <Typography className='text-sm m-0'>Ancillary Automation</Typography> */}
-                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>1.0.2</span></Typography>
+                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>3.1.8</span></Typography>
                             </div>
                         </Box>
-                        <Typography variant="h3" className="mb-2 font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                        <Typography variant="h3" className="mb-2 font-bold font-bold bg-gradient-to-r from-green-400 to-[#74B87B]-400 bg-clip-text text-transparent">
                             Ancillary Data Parser Pro
                         </Typography>
                         <Typography variant="subtitle1" color="textSecondary">
@@ -595,68 +667,105 @@ export default function AncillaryDataParser() {
                                     </Box>
                                 </Box>
                             </Paper>
-                            
+
                             {/* Stats */}
                             <Grid container >
-                                <Grid size={{xs:12, md:8, lg:9}}>
-                            <StatsCards summary={{ ...data.summary, totalParsedCount: data.parsedGeneral.length + data.parsedTherapies.length, generalParsedCount: data.parsedGeneral.length, therapiesParsedCount: data.parsedTherapies.length }} />
-                            </Grid>
-                        {/* reported ate */}
-                        <Grid size={{xs:12,md:4, lg:3}}>
-                        <Box sx={{mb:2}}>
-                                <div className="bg-[#1A1A1A] rounded-xl shadow-2xl overflow-hidden w-full max-w-md">
-                                    <div className="p-6">
-                                        <h2 className="text-xl font-semibold text-gray-300 mb-2">Report Period - {stateAbbr} State</h2>
-                                        <p className="text-gray-400 mb-6">Viewing data for the following date range:</p>
+                                <Grid size={{ xs: 12, md: 7, lg: 9 }}>
+                                    <StatsCards summary={{ ...data.summary, totalParsedCount: data.parsedGeneral.length + data.parsedTherapies.length, generalParsedCount: data.parsedGeneral.length, therapiesParsedCount: data.parsedTherapies.length }} />
+                                </Grid>
+                                {/* reported ate */}
+                                <Grid size={{ xs: 12, md: 5, lg: 3 }}>
+                                    <Box sx={{ mb: 2, width: '100%' }}>
+                                        <div className="bg-[#1A1A1A] rounded-xl shadow-2xl overflow-hidden w-full">
+                                            <div className="p-6">
+                                                <h2 className="text-xl font-semibold text-gray-300 mb-2">Report Period - {stateAbbr} State</h2>
+                                                <p className="text-gray-400 mb-6">Viewing data for the following date range:</p>
 
-                                        <div className="flex items-center justify-between bg-[#0A0A0A] rounded-lg p-4 border border-gray-600">
-                                            <div className="text-center">
-                                                <p className="text-sm text-gray-400 font-medium">Start Date</p>
-                                                <p className="text-2xl font-bold text-indigo-400">{dateRange.startDate}</p>
-                                            </div>
+                                                <div className="flex items-center justify-between bg-[#0A0A0A] rounded-lg p-4 border border-gray-600">
+                                                    <div className="text-center">
+                                                        <p className="text-sm text-gray-400 font-medium">Start Date</p>
+                                                        <p className="text-2xl font-bold text-indigo-400">{dateRange.startDate}</p>
+                                                    </div>
 
-                                            <div className="mx-4">
-                                                <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                                </svg>
-                                            </div>
+                                                    <div className="mx-4">
+                                                        <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                        </svg>
+                                                    </div>
 
-                                            <div className="text-center">
-                                                <p className="text-sm text-gray-400 font-medium">End Date</p>
-                                                <p className="text-2xl font-bold text-indigo-400">{dateRange.endDate}</p>
+                                                    <div className="text-center">
+                                                        <p className="text-sm text-gray-400 font-medium">End Date</p>
+                                                        <p className="text-2xl font-bold text-indigo-400">{dateRange.endDate}</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </Box>
-                            </Grid>
+                                    </Box>
+                                </Grid>
                             </Grid>
                             {/* Tabs */}
-                            <Box className="mb-4 gap-1 flex ">
-                                <Button
-                                    variant={activeTab === 'general' ? 'contained' : 'outlined'}
-                                    onClick={() => setActiveTab('general')}
-                                    color='error'
-                                    className="mr-2"
-                                    sx={{ textTransform: "capitalize" }}
-                                >
-                                    General Tests ({data.parsedGeneral.length})
-                                </Button>
-                                <Button
-                                    variant={activeTab === 'therapies' ? 'contained' : 'outlined'}
-                                    onClick={() => setActiveTab('therapies')}
-                                    sx={{ textTransform: "capitalize" }}
-                                >
-                                    Therapies ({data.parsedTherapies.length})
-                                </Button>
-                            </Box>
+                            <Grid container className="mb-3">
+                                <Grid item size={{ md: 8 }}>
+
+                                    <Box className="mb-4 gap-1 flex ">
+                                        <Button
+                                            variant={activeTab === 'general' ? 'contained' : 'outlined'}
+                                            onClick={() => setActiveTab('general')}
+                                            color='error'
+                                            className="mr-2"
+                                            sx={{ textTransform: "capitalize" }}
+                                        >
+                                            General Tests ({data.parsedGeneral.length})
+                                        </Button>
+                                        <Button
+                                            variant={activeTab === 'therapies' ? 'contained' : 'outlined'}
+                                            onClick={() => setActiveTab('therapies')}
+                                            sx={{ textTransform: "capitalize" }}
+                                        >
+                                            Therapies ({data.parsedTherapies.length})
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                                <Grid size={{xs:12,md:4}}>
+                                    <div className="w-full mx-auto">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter State Code"
+                                                className="w-full px-4 py-3 pr-24 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 shadow-sm"
+                                            />
+                                            <button
+                                                onClick={handleSubmitStateChange}
+                                                disabled={isButtonDisabled || stateProgress==100}
+                                                className={`absolute right-2 top-1/2 transform -translate-y-1/2 py-2 px-4 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:shadow-lg active:scale-95
+                                            ${isButtonDisabled
+                                                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                                        : `${stateProgress <100?"bg-blue-600 hover:bg-blue-700":"bg-green-600 hover:bg-green-700"} text-white font-medium`}`}
+                                            >
+                                                {stateProgress >= 100 ?"Completed":stateProgress > 0? stateProgress + " Processing...":"Update"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </Grid>
+                            </Grid>
+
 
                             {/* Data Grid */}
                             <Paper className="h-170 text-left bg-[#1A1A1A] border" sx={{ borderColor: "#ffffff30" }} >
                                 <DataGridPro
                                     rows={currentData}
                                     columns={columns}
+                                    // pinnedColumns={{left:["patientName"]}}
                                     checkboxSelection
+                                    initialState={{
+                                        pinnedColumns: {
+                                            left: ['__check__', 'patientName'], // <-- selection first, then patientName
+                                        },
+                                    }}
+
+
                                     showToolbar
                                     slotProps={{
                                         toolbar: {
@@ -667,22 +776,43 @@ export default function AncillaryDataParser() {
                                         },
                                     }}
                                     label={<div className='flex items-center gap-2' style={{ fontWeight: 'bold' }}><FileSpreadsheet size={20} /> Ancillary {activeTab[0].toLocaleUpperCase() + activeTab.slice(1)} Parsed Output</div>}
-                                    disableRowSelectionOnClick
+
                                     sx={{
                                         background: "transparent",
                                         border: 'none',
                                         '& .MuiDataGrid-cell': {
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                            borderBottom: '1px solid rgba(17, 19, 17, 0.38)',
                                         },
                                         '& .MuiDataGrid-columnHeaders': {
                                             backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                                            borderBottom: '2px solid #00BCD4',
+                                            borderBottom: '2px solid rgb(47, 119, 33)',
                                         },
                                         '& .MuiDataGrid-virtualScroller': {
                                             backgroundColor: 'transparent',
                                         },
                                     }}
+                                    sortingMode="server" // 👈 important: tells MUI you're handling sort manually
+                                    sortModel={sortModel}
+                                    onSortModelChange={handleSortModelChange}
+                                    onRowSelectionModelChange={(newSelection) => {
+                                        if (newSelection.type == "include") {
+                                            setIsSelect(true)
+                                            setSelectedIds(newSelection);
+                                        }
+                                        if (newSelection.type == "exclude") {
+                                            setIsSelect(true)
+                                            const filteredIds = currentData
+                                                .filter(item => !newSelection.ids.has(item.id))
+                                                .map(item => item.id);
+                                            setSelectedIds({ type: "include", ids: new Set(filteredIds) });
+
+                                            return
+                                        }
+                                        if (newSelection.ids.size == 0) setIsSelect(false)
+                                    }}
+                                    rowSelectionModel={selectedIds}
                                 />
+                                <FloatingDeleteButton setSelectedIds={setSelectedIds} setIsSelect={setIsSelect} isSelect={selectedIds.type == "exclude" || isSelect} isDeleting={isDeleting} setDeleting={setIsDeleting} handleDelete={handleDelete} selectedCount={selectedIds.ids.size} />
                             </Paper>
                         </>
                     )}
@@ -769,6 +899,9 @@ export default function AncillaryDataParser() {
                                     )
                                 }}
                             />
+
+
+
 
                         </div>
 
