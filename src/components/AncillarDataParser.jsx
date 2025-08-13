@@ -392,10 +392,13 @@ export default function AncillaryDataParser() {
 
     const handleFileUpload = async (file) => {
         setLoading(true);
+        setInputValue("")
+
         setError(null);
         setFileName(file.name);
         setSelectedFile(file)
         setOpen(true)
+        setStateProgress(0)
         setProcessStart(false)
 
     };
@@ -478,6 +481,10 @@ export default function AncillaryDataParser() {
         setLoading(false)
         setSelectedFile(null);
         handleReset()
+        setInputValue("")
+
+        setStateProgress(0)
+
         setProcessStart(false)
     };
 
@@ -501,7 +508,8 @@ export default function AncillaryDataParser() {
         setFileName('');
         setError(null);
         setStateAbbr('');
-
+        setStateProgress(0)
+        setInputValue("")
         setProcessStart(false)
         setActiveTab('general');
     };
@@ -563,6 +571,7 @@ export default function AncillaryDataParser() {
       
           // Update state once per chunk (fast!)
           setData({
+            ...data,
             parsedGeneral: updatedGeneral,
             parsedTherapies: updatedTherapies,
           });
@@ -618,7 +627,7 @@ export default function AncillaryDataParser() {
                             <div className='text-left'>
                                 <Typography className='uppercase m-0 p-0 text-sm text-muted-foreground font-bold'><b>Personic Health</b></Typography>
                                 {/* <Typography className='text-sm m-0'>Ancillary Automation</Typography> */}
-                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>3.1.8</span></Typography>
+                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>3.1.9</span></Typography>
                             </div>
                         </Box>
                         <Typography variant="h3" className="mb-2 font-bold font-bold bg-gradient-to-r from-green-400 to-[#74B87B]-400 bg-clip-text text-transparent">
