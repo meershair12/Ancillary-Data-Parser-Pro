@@ -18,7 +18,8 @@ import {
     Tooltip,
     Modal,
     TextField,
-    InputAdornment
+    InputAdornment,
+    Autocomplete
 } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { CheckCircleIcon, FileSpreadsheet, MapPin, Trash2 } from 'lucide-react';
@@ -43,6 +44,7 @@ import { parseAncillaryDataAsync } from './utils';
 import FloatingDeleteButton from './FloatingDeleteButton';
 
 import { ToastContainer, toast } from 'react-toastify';
+import EnvironmentBadge from './AppMode';
 
 // Dark theme configuration
 const darkTheme = createTheme({
@@ -200,7 +202,7 @@ function StatsCards({ summary }) {
         <Grid container spacing={3} className="mb-6 mr-4">
             {stats.map((stat, index) => (
                 <Grid item size={{ xs: 12, md: 5, lg: 4 }} key={index}>
-                    <Card className="h-full " sx={{ borderRadius: '10px', width: "100%" }}>
+                    <Card className="h-full" sx={{ borderRadius: '10px', width: "100%" }}>
                         <CardContent className="flex items-center justify-between">
                             <Box className="flex-1 text-left">
                                 <Typography color="textSecondary" gutterBottom variant="overline" className='text-left'>
@@ -220,7 +222,7 @@ function StatsCards({ summary }) {
                                     }}>{stat.parsedValue}</span>
                                 </Typography>
                             </Box>
-                            <Box className="text-cyan-400">
+                            <Box className="text-[#FC7600]">
                                 {stat.icon}
                             </Box>
                         </CardContent>
@@ -551,70 +553,87 @@ export default function AncillaryDataParser() {
         const total = data.parsedGeneral.length + data.parsedTherapies.length;
         let processed = 0;
         const chunkSize = 100; // ✅ Tune for speed vs responsiveness
-      
+
         // Clone data once (deep enough to allow mutation)
         let updatedGeneral = data.parsedGeneral.map((r) => ({ ...r }));
         let updatedTherapies = data.parsedTherapies.map((r) => ({ ...r }));
-      
+
         // Process in chunks
         for (let start = 0; start < total; start += chunkSize) {
-          const end = Math.min(start + chunkSize, total);
-      
-          for (let i = start; i < end; i++) {
-            if (i < updatedGeneral.length) {
-              updatedGeneral[i].state = newValue;
-            } else {
-              updatedTherapies[i - updatedGeneral.length].state = newValue;
+            const end = Math.min(start + chunkSize, total);
+
+            for (let i = start; i < end; i++) {
+                if (i < updatedGeneral.length) {
+                    updatedGeneral[i].state = newValue;
+                } else {
+                    updatedTherapies[i - updatedGeneral.length].state = newValue;
+                }
+                processed++;
             }
-            processed++;
-          }
-      
-          // Update state once per chunk (fast!)
-          setData({
-            ...data,
-            parsedGeneral: updatedGeneral,
-            parsedTherapies: updatedTherapies,
-          });
-      
-          // Update progress bar
-          const percent = ((processed / total) * 100).toFixed(2);
-          setStateProgress(percent);
-      
-          // Let UI breathe
-          await new Promise((resolve) => setTimeout(resolve, 0));
+
+            // Update state once per chunk (fast!)
+            setData({
+                ...data,
+                parsedGeneral: updatedGeneral,
+                parsedTherapies: updatedTherapies,
+            });
+
+            // Update progress bar
+            const percent = ((processed / total) * 100).toFixed(2);
+            setStateProgress(percent);
+
+            // Let UI breathe
+            await new Promise((resolve) => setTimeout(resolve, 0));
         }
-      };
-      
-      
-    
-    
+    };
+
+
+
+
 
     const [inputValue, setInputValue] = useState('');
     const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-  
+
     const handleInputChange = (e) => {
         setStateProgress(0)
-      // Allow only alphabetic characters
-      const filteredValue = e.target.value.replace(/[^a-zA-Z]/g, '');
-      if(filteredValue.length <=2){
-          setInputValue(filteredValue.toLocaleUpperCase());
-          setIsButtonDisabled(filteredValue.length === 0);
-          
+        // Allow only alphabetic characters
+        const filteredValue = e.target.value.replace(/[^a-zA-Z]/g, '');
+        if (filteredValue.length <= 2) {
+            setInputValue(filteredValue.toLocaleUpperCase());
+            setIsButtonDisabled(filteredValue.length === 0);
+
         }
     };
-    
+
     const handleSubmitStateChange = () => {
         // Here you can call your function with the input value 
         updateStatesAsync(inputValue.toLocaleUpperCase());
-      
-      // Optional: Clear input after submission
-      // setInputValue('');
-      // setIsButtonDisabled(true);
+
+        // Optional: Clear input after submission
+        // setInputValue('');
+        // setIsButtonDisabled(true);
     };
+
+
+    //     const [stateOptions,setStateOptions] = useState([]);
+
+    // useEffect(() => {
+    //   fetch("/state.json")
+    //     .then((res) => res.json()) // ✅ directly convert response to JSON
+    //     .then((result) => {
+    //       setStateOptions(result); // ✅ ab JSON array milega
+    //     })
+    //     .catch((err) => {
+    //       console.error("Error fetching states:", err);
+    //     });
+    // }, []);
+
+
 
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
+            <EnvironmentBadge />
             <ToastContainer />
             {processStart && <LoadingModal progress={progress} />}
 
@@ -627,10 +646,10 @@ export default function AncillaryDataParser() {
                             <div className='text-left'>
                                 <Typography className='uppercase m-0 p-0 text-sm text-muted-foreground font-bold'><b>Personic Health</b></Typography>
                                 {/* <Typography className='text-sm m-0'>Ancillary Automation</Typography> */}
-                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>3.1.9</span></Typography>
+                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>4.2.3</span></Typography>
                             </div>
                         </Box>
-                        <Typography variant="h3" className="mb-2 font-bold font-bold bg-gradient-to-r from-green-400 to-[#74B87B]-400 bg-clip-text text-transparent">
+                        <Typography variant="h3" className="mb-2 font-bold font-bold text-green-600">
                             Ancillary Data Parser Pro
                         </Typography>
                         <Typography variant="subtitle1" color="textSecondary">
@@ -645,7 +664,27 @@ export default function AncillaryDataParser() {
                     )}
 
                     {!data ? (
-                        <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+                        <div className='text-center'>
+                            <FileUpload onFileUpload={handleFileUpload} loading={loading} />
+
+                            <div className="mt-8 text-center">
+                                <p className="text-gray-600 text-sm font-medium tracking-wide">
+                                    A product of{' '}
+                                    <span className="text-green-600 font-semibold hover:text-green-700 transition-colors duration-200 cursor-pointer">
+                                        Personic Health
+                                    </span>
+                                </p>
+                            </div>
+                            <div className="mt-2 text-center">
+                                <p className="text-gray-700 text-sm font-medium">
+                                    <span className="font-bold">© {new Date().getFullYear()} Personic Health.</span>
+                                    <span className="mx-2 text-gray-400">|</span>
+                                    <span className="font-semibold">All Rights Reserved.</span>
+                                </p>
+                            </div>
+
+                        </div>
+
                     ) : (
                         <>
 
@@ -735,7 +774,7 @@ export default function AncillaryDataParser() {
                                         </Button>
                                     </Box>
                                 </Grid>
-                                <Grid size={{xs:12,md:4}}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <div className="w-full mx-auto">
                                         <div className="relative">
                                             <input
@@ -747,13 +786,13 @@ export default function AncillaryDataParser() {
                                             />
                                             <button
                                                 onClick={handleSubmitStateChange}
-                                                disabled={isButtonDisabled || stateProgress==100}
+                                                disabled={isButtonDisabled || stateProgress == 100}
                                                 className={`absolute right-2 top-1/2 transform -translate-y-1/2 py-2 px-4 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-md hover:shadow-lg active:scale-95
                                             ${isButtonDisabled
                                                         ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                                        : `${stateProgress <100?"bg-blue-600 hover:bg-blue-700":"bg-green-600 hover:bg-green-700"} text-white font-medium`}`}
+                                                        : `${stateProgress < 100 ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"} text-white font-medium`}`}
                                             >
-                                                {stateProgress >= 100 ?"Completed":stateProgress > 0? stateProgress + " Processing...":"Update"}
+                                                {stateProgress >= 100 ? "Completed" : stateProgress > 0 ? stateProgress + " Processing..." : "Update"}
                                             </button>
                                         </div>
                                     </div>
@@ -828,8 +867,7 @@ export default function AncillaryDataParser() {
                 </Container>
             </div>
 
-            <ProfessionalFooter
-            />
+            {/* <ProfessionalFooter/> */}
             <Modal
                 open={open}
                 onClose={handleCancel}
@@ -873,9 +911,55 @@ export default function AncillaryDataParser() {
 
                         {/* State Input */}
                         <div className="mb-6">
+                            {/* <Autocomplete
+                                options={stateOptions}
+                                value={stateOptions.find((s) => s.abbreviation === stateAbbr) || null}
+                                onChange={(event, newValue) => {
+                                    if (newValue) {
+                                        setStateAbbr(newValue.abbreviation); // 👈 only abbreviation stored
+                                    } else {
+                                        setStateAbbr("");
+                                    }
+                                }}
+                                getOptionLabel={(option) =>
+                                    option ? `${option.name} (${option.abbreviation})` : ""
+                                }
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        fullWidth
+                                        color="success"
+                                        label="Enter State"
+                                        placeholder="e.g., Maryland (MD)"
+                                        helperText="Select state (Name + Abbreviation)"
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && stateAbbr.trim()) {
+                                                e.preventDefault();
+                                                handleConfirm(stateAbbr); // pass abbreviation
+                                            }
+                                        }}
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <MapPin size={18} style={{ color: "#666" }} />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        sx={{
+                                            mb: 2,
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: 3,
+                                            },
+                                        }}
+                                    />
+                                )}
+                            /> */}
+
                             <TextField
                                 fullWidth
                                 focused
+                                color='success'
                                 autoFocus
                                 label="Enter State Abbreviation"
                                 value={stateAbbr}
@@ -909,9 +993,6 @@ export default function AncillaryDataParser() {
                                 }}
                             />
 
-
-
-
                         </div>
 
                         {/* Action Buttons */}
@@ -928,9 +1009,13 @@ export default function AncillaryDataParser() {
                             <Button
                                 variant="contained"
                                 onClick={handleConfirm}
-                                sx={{ borderRadius: 2, textTransform: 'capitalize' }}
+                                sx={{
+                                    borderRadius: 2, textTransform: 'capitalize', background: "#52a756ff", ":hover": {
+                                        background: "#388E3C"
+                                    }
+                                }}
                                 disabled={!stateAbbr.trim()}
-                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300"
+                                className="dark:bg-green-600 hover:bg-green-700 disabled:bg-gray-300"
                             >
                                 Confirm
                             </Button>

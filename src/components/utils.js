@@ -74,19 +74,24 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 const row = Array.from({ length: 5 }, (_, idx) =>
                     rawRows[i]?.[idx] ? String(rawRows[i][idx]).trim() : ""
                 );
-
+                
+                
                 const firstCell = row[0];
-                if (!firstCell) continue;
 
+               
+                if (!firstCell) continue;
                 if (firstCell.includes(",") && !firstCell.includes("(M") && !row[1]) {
                     currentPhysician = firstCell;
                     npNames.push(currentPhysician.trim());
-                } else if (firstCell.includes("(M")) {
+                } 
+                else if (firstCell.includes("(M")) { // ok
                     currentPatient = firstCell.split(" (M")[0];
                     currentMRN = "M" + (firstCell.match(/\(M(.*?)\)/)?.[1] || "");
-                } else if ((!row[1] && !row[2]) || firstCell.toUpperCase().includes("DEVICE")) {
+                } 
+                else if ((!row[1] && !row[3]) || firstCell.toUpperCase().includes("DEVICE")) {
                     currentCategory = firstCell;
-                } else if (currentPatient && currentMRN) {
+                } 
+                 else if (currentPatient && currentMRN) {
                     const descriptor = firstCell;
                     let dateOrdered = row[2] || row[3] || "";
                     dateOrdered = excelDateToEST(dateOrdered);
@@ -111,7 +116,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             state: stateCode.trim(),
                             uid: uid.trim()
                         };
-
+                       
                         if (currentCategory.toUpperCase() === "OTHER SERVICES AND THERAPIES" &&
                             descriptor.toUpperCase() === "DEBRIDEMENT") {
                             parsedTherapies.push(record);
@@ -120,6 +125,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                         }
                     }
                 }
+               
                 processed++;
             }
 
