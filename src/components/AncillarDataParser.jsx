@@ -44,7 +44,6 @@ import { parseAncillaryDataAsync } from './utils';
 import FloatingDeleteButton from './FloatingDeleteButton';
 
 import { ToastContainer, toast } from 'react-toastify';
-import EnvironmentBadge from './AppMode';
 
 // Dark theme configuration
 const darkTheme = createTheme({
@@ -164,7 +163,7 @@ function StatsCards({ summary }) {
             title: 'Total Records',
             value: summary?.totalCount || 0,
             parsedValue: summary?.totalParsedCount || 0,
-            icon: <Assessment color='warning' />,
+            icon: <Assessment color='success' />,
             color: 'primary',
             sx: {
                 bg: "#0e330e",
@@ -633,7 +632,7 @@ export default function AncillaryDataParser() {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            <EnvironmentBadge />
+           
             <ToastContainer />
             {processStart && <LoadingModal progress={progress} />}
 
@@ -646,7 +645,7 @@ export default function AncillaryDataParser() {
                             <div className='text-left'>
                                 <Typography className='uppercase m-0 p-0 text-sm text-muted-foreground font-bold'><b>Personic Health</b></Typography>
                                 {/* <Typography className='text-sm m-0'>Ancillary Automation</Typography> */}
-                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>4.2.3</span></Typography>
+                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>4.3.5</span></Typography>
                             </div>
                         </Box>
                         <Typography variant="h3" className="mb-2 font-bold font-bold text-green-600">
@@ -732,7 +731,7 @@ export default function AncillaryDataParser() {
                                                 <div className="flex items-center justify-between bg-[#0A0A0A] rounded-lg p-4 border border-gray-600">
                                                     <div className="text-center">
                                                         <p className="text-sm text-gray-400 font-medium">Start Date</p>
-                                                        <p className="text-2xl font-bold text-indigo-400">{dateRange.startDate}</p>
+                                                        <p className="text-2xl font-bold text-[#74B87B]">{dateRange.startDate}</p>
                                                     </div>
 
                                                     <div className="mx-4">
@@ -743,7 +742,7 @@ export default function AncillaryDataParser() {
 
                                                     <div className="text-center">
                                                         <p className="text-sm text-gray-400 font-medium">End Date</p>
-                                                        <p className="text-2xl font-bold text-indigo-400">{dateRange.endDate}</p>
+                                                        <p className="text-2xl font-bold text-[#74B87B]">{dateRange.endDate}</p>
                                                     </div>
                                                 </div>
                                             </div>

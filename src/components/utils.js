@@ -78,9 +78,11 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 
                 const firstCell = row[0];
 
+                
                
                 if (!firstCell) continue;
-                if (firstCell.includes(",") && !firstCell.includes("(M") && !row[1]) {
+                if (firstCell.includes(",") && !firstCell.includes("(M") && !row[1] && !row[3]) {
+                    
                     currentPhysician = firstCell;
                     npNames.push(currentPhysician.trim());
                 } 

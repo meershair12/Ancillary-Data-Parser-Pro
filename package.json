@@ -1,7 +1,7 @@
 {
   "name": "personic-ancillary",
   "private": true,
-  "version": "3.1.9",
+  "version": "4.3.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
