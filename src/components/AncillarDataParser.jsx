@@ -233,6 +233,43 @@ function StatsCards({ summary }) {
 }
 
 
+ const columnsBase  = [
+        {
+            field: 'patientName',
+            headerName: 'Name',
+            width: 250,
+            editable: true,
+
+            renderCell: (params) => (
+                <Box className="flex items-center">
+                    <Person className="mr-2 text-gray-400" fontSize="small" />
+                    {params.value}
+                </Box>
+            )
+        },
+        { field: 'mrn', headerName: 'MRN (Import)', width: 120, editable: true, },
+        { field: 'category', headerName: 'Ancillary Service Category', width: 200, editable: true, },
+        { field: 'testName', headerName: 'Test Name', width: 300, editable: true, },
+        { field: 'physician', headerName: 'Ordering Physician', width: 200, editable: true, },
+        {
+            field: 'dateOrdered',
+            headerName: 'Date Ordered',
+            width: 150,
+            renderCell: (params) => (
+                <Box className="flex items-center">
+                    <DateRange className="mr-2 text-gray-400" fontSize="small" />
+                    {params.value}
+                </Box>
+            ),
+
+            editable: true,
+        },
+        { field: 'state', headerName: 'State', width: 100, editable: true, },
+        { field: 'status', headerName: 'Order/Fax Status', width: 850 },
+        { field: 'uid', headerName: 'UID', width: 850 }
+    ];
+
+
 
 // Main component
 export default function AncillaryDataParser() {
@@ -356,40 +393,10 @@ export default function AncillaryDataParser() {
     }, [data]);
 
 
-    const columns = [
-        {
-            field: 'patientName',
-            headerName: 'Patient Name',
-            width: 250,
-            editable: true,
-
-            renderCell: (params) => (
-                <Box className="flex items-center">
-                    <Person className="mr-2 text-gray-400" fontSize="small" />
-                    {params.value}
-                </Box>
-            )
-        },
-        { field: 'mrn', headerName: 'MRN (Import)', width: 120, editable: true, },
-        { field: 'category', headerName: 'Ancillary Service Category', width: 200, editable: true, },
-        { field: 'testName', headerName: 'Test Name', width: 300, editable: true, },
-        { field: 'physician', headerName: 'Ordering Physician', width: 200, editable: true, },
-        {
-            field: 'dateOrdered',
-            headerName: 'Date Ordered',
-            width: 150,
-            renderCell: (params) => (
-                <Box className="flex items-center">
-                    <DateRange className="mr-2 text-gray-400" fontSize="small" />
-                    {params.value}
-                </Box>
-            ),
-
-            editable: true,
-        },
-        { field: 'state', headerName: 'State', width: 100, editable: true, },
-        { field: 'uid', headerName: 'UID', width: 850 }
-    ];
+   const columns =
+    activeTab === "general"
+      ? columnsBase
+      : columnsBase.filter((col) => col.field !== "status");
 
     const handleFileUpload = async (file) => {
         setLoading(true);
@@ -645,7 +652,7 @@ export default function AncillaryDataParser() {
                             <div className='text-left'>
                                 <Typography className='uppercase m-0 p-0 text-sm text-muted-foreground font-bold'><b>Personic Health</b></Typography>
                                 {/* <Typography className='text-sm m-0'>Ancillary Automation</Typography> */}
-                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>4.3.5</span></Typography>
+                                <Typography className='text-gray-400 m-0' >Version <span className='bg-[#2a432c] p-1 rounded-[10px] px-2 text-white border border-[#74B87B] text-sm'>4.6.7</span></Typography>
                             </div>
                         </Box>
                         <Typography variant="h3" className="mb-2 font-bold font-bold text-green-600">
