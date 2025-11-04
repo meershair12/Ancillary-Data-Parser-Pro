@@ -258,7 +258,7 @@ const LoadingModal = ({ progress }) => {
                                 width: `${progress.percentage}%`,
                                 background: 'linear-gradient(90deg, #10b981 0%, #34d399 50%, #8b5cf6 100%)',
                                 borderRadius: '12px',
-                                transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                               
                                 boxShadow: '0 0 20px rgba(16, 185, 129, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
                                 position: 'relative',
                                 overflow: 'hidden'
