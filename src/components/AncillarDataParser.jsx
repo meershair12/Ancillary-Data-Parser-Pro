@@ -501,6 +501,8 @@ export default function AncillaryDataParser() {
         setInputValue("")
         setStateProgress(0)
         setProcessStart(false)
+        setData(null)
+        setProgress(0)
     };
 
 
@@ -511,7 +513,9 @@ export default function AncillaryDataParser() {
         setError(null);
         setStateAbbr('');
         setStateProgress(0)
+        setProgress(0)
         setInputValue("")
+        
         setProcessStart(false)
         setActiveTab('ancillary');
     };

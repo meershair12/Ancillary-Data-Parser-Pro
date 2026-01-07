@@ -65,9 +65,10 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
         let currentCategory = "";
 
         const totalRows = rawRows.length - 8;
+        
         let processed = 0;
         const chunkSize = 200; // Process 200 rows per loop for speed
-
+ 
         function processChunk(startIndex) {
             const endIndex = Math.min(startIndex + chunkSize, rawRows.length);
 
@@ -146,11 +147,17 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                     }
                 }
 
-                processed++;
+               
+                processed = Math.min(endIndex - 8, totalRows);
+
             }
 
+           
             onProgress?.({
-                percentage: ((processed / totalRows) * 100).toFixed(1),
+               percentage: Math.min(
+        ((processed / totalRows) * 100),
+        100
+    ).toFixed(1),
                 processedGeneral: parsedGeneral.length,
                 processedTherapies: parsedTherapies.length,
                 processedSurgical: surgicalOrders.length,

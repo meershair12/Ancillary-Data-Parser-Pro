@@ -28,7 +28,7 @@ const LoadingModal = ({ progress }) => {
     progress.percentage >= step.threshold ? idx : acc
   ), 0);
 
-  const isOpen = progress.percentage >= 0 && progress.percentage < 95;
+  const isOpen = progress.percentage >= 0 && progress.percentage < 100;
 
   return (
     <Dialog 
@@ -69,7 +69,7 @@ const LoadingModal = ({ progress }) => {
             {/* Active Progress with Glow */}
             <CircularProgress
               variant="determinate"
-              value={Number(progress.percentage) > 95 ? 0 : Number(progress.percentage) || 0}
+              value={Number(progress.percentage) || 0}
               size={72}
               thickness={3}
               sx={{
@@ -128,7 +128,7 @@ const LoadingModal = ({ progress }) => {
         <Box sx={{ px: 1 }}>
           <LinearProgress 
             variant="determinate" 
-            value={progress.percentage > 95 ? 0 : progress.percentage || 0} 
+            value={progress.percentage || 0} 
             sx={{ 
               height: 4, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.05)',
               mb: 2,
