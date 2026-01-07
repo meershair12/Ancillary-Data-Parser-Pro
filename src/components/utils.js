@@ -7,27 +7,27 @@
 export function getLatestByMRN(data, dateKey = 'dateOrdered') {
     if (!Array.isArray(data)) return [];
     const latestRecords = {};
-    
+
     data.forEach(record => {
-      const mrn = record.mrn;
-      const dateStr = record[dateKey];
-      
-      if (!mrn || !dateStr) return; // skip invalid records
-      
-      const date = new Date(dateStr);
-      
-      if (isNaN(date)) return; // skip invalid dates
-      if (!latestRecords[mrn] || date > new Date(latestRecords[mrn][dateKey])) {
-        latestRecords[mrn] = record;
-    }
+        const mrn = record.mrn;
+        const dateStr = record[dateKey];
+
+        if (!mrn || !dateStr) return; // skip invalid records
+
+        const date = new Date(dateStr);
+
+        if (isNaN(date)) return; // skip invalid dates
+        if (!latestRecords[mrn] || date > new Date(latestRecords[mrn][dateKey])) {
+            latestRecords[mrn] = record;
+        }
     });
-    
+
 
     return Object.values(latestRecords);
-  }
-  
+}
 
-  export function excelDateToEST(excelSerialDate) {
+
+export function excelDateToEST(excelSerialDate) {
     // Use 1899-12-31 as the correct base date
     const utcDate = new Date(Date.UTC(1899, 11, 31) + excelSerialDate * 86400000);
 
@@ -56,6 +56,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
 
         const parsedGeneral = [];
         const parsedTherapies = [];
+        const surgicalOrders = [];
         const npNames = [];
 
         let currentPhysician = "";
@@ -74,26 +75,27 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 const row = Array.from({ length: 5 }, (_, idx) =>
                     rawRows[i]?.[idx] ? String(rawRows[i][idx]).trim() : ""
                 );
-                
-                
+
+
                 const firstCell = row[0];
 
-                
-               
+
+
                 if (!firstCell) continue;
                 if (firstCell.includes(",") && !firstCell.includes("(M") && !row[1] && !row[3]) {
-                    
+
+
                     currentPhysician = firstCell;
                     npNames.push(currentPhysician.trim());
-                } 
+                }
                 else if (firstCell.includes("(M")) { // ok
                     currentPatient = firstCell.split(" (M")[0];
                     currentMRN = "M" + (firstCell.match(/\(M(.*?)\)/)?.[1] || "");
-                } 
+                }
                 else if ((!row[1] && !row[3]) || firstCell.toUpperCase().includes("DEVICE")) {
                     currentCategory = firstCell;
-                } 
-                 else if (currentPatient && currentMRN) {
+                }
+                else if (currentPatient && currentMRN) {
                     const descriptor = firstCell;
                     let dateOrdered = row[2] || row[3] || "";
                     dateOrdered = excelDateToEST(dateOrdered);
@@ -106,7 +108,11 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             descriptor.toUpperCase() === "DEBRIDEMENT") {
                             uid = `${currentMRN}_${finalDescriptor}`;
                         }
+                        if (currentCategory.toLowerCase() === "laboratory" &&
+                            descriptor.toLowerCase() === "debridement method wound") {
 
+                            uid = `${currentMRN}_${finalDescriptor}`;
+                        }
                         const record = {
                             id: i - 7,
                             patientName: currentPatient.trim(),
@@ -116,23 +122,30 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             physician: currentPhysician.trim(),
                             dateOrdered,
                             state: stateCode.trim(),
-                             status: (finalDescriptor && typeof finalDescriptor === 'string' &&
+                            status: (finalDescriptor && typeof finalDescriptor === 'string' &&
                                 (finalDescriptor.includes("Wound microorganism gene identification panel by NAA with probe detection") ||
                                     finalDescriptor.includes("Bacteria identified")))
                                 ? "Priority Labs (Or other PCR Lab)"
                                 : "",
+
+
                             uid: uid.trim()
                         };
-                       
+
                         if (currentCategory.toUpperCase() === "OTHER SERVICES AND THERAPIES" &&
                             descriptor.toUpperCase() === "DEBRIDEMENT") {
                             parsedTherapies.push(record);
-                        } else {
+                        }
+                        else if (currentCategory.toLowerCase() === "laboratory" &&
+                            descriptor.toLowerCase() === "debridement method wound") {
+                            surgicalOrders.push(record);
+                        }
+                        else {
                             parsedGeneral.push(record);
                         }
                     }
                 }
-               
+
                 processed++;
             }
 
@@ -140,6 +153,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 percentage: ((processed / totalRows) * 100).toFixed(1),
                 processedGeneral: parsedGeneral.length,
                 processedTherapies: parsedTherapies.length,
+                processedSurgical: surgicalOrders.length,
                 totalProcessed: processed,
                 totalRows
             });
@@ -159,11 +173,13 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 resolve({
                     parsedGeneral: unique(parsedGeneral),
                     parsedTherapies: unique(getLatestByMRN(parsedTherapies)),
+                    parsedSurgical: unique(getLatestByMRN(surgicalOrders)),
                     npNames,
                     summary: {
                         generalCount: parsedGeneral.length,
                         therapiesCount: parsedTherapies.length,
-                        totalCount: parsedGeneral.length + parsedTherapies.length
+                        surgicalCount: surgicalOrders.length,
+                        totalCount: parsedGeneral.length + parsedTherapies.length + surgicalOrders.length
                     }
                 });
             }
@@ -245,9 +261,9 @@ export function parseAncillaryDataAsync1(rawRows, stateCode, onProgress) {
 
                         // const uid = `${currentMRN}_${finalDescriptor}_${currentPhysician}_${dateOrdered}`;
                         let uid = `${currentMRN}_${finalDescriptor}_${currentPhysician}_${dateOrdered}`;
-                        
+
                         if (currentCategory.toUpperCase() === "OTHER SERVICES AND THERAPIES" && descriptor.toUpperCase() === "DEBRIDEMENT") {
-                             uid = `${currentMRN}_${finalDescriptor}`;
+                            uid = `${currentMRN}_${finalDescriptor}`;
                         }
 
                         const record = {
@@ -267,7 +283,7 @@ export function parseAncillaryDataAsync1(rawRows, stateCode, onProgress) {
                         } else {
                             parsedGeneral.push(record);
                         }
-                           
+
                     }
                 }
             }
@@ -379,7 +395,7 @@ export function parseAncillaryDataAsyncBackup(rawRows, stateCode, onProgress) {
                         } else {
                             parsedGeneral.push(record);
                         }
-                           
+
                     }
                 }
             }
