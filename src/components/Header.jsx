@@ -6,11 +6,13 @@ import {
     Database,
     Settings,
     Activity,
-    Cpu
+    Cpu,
+    ArrowDownRight
 } from 'lucide-react';
 import Logo from './logo.png';
 import { appConfig } from './appConfig';
 import { IOSSwitch } from './ThemeToggleButton';
+import { Link } from 'react-router';
 const EnterpriseHeader = () => {
     
     return (
@@ -31,6 +33,10 @@ const EnterpriseHeader = () => {
                         <Typography sx={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em' }}>
                             ENGINE:  {appConfig.version}
                         </Typography>
+
+                          <Link className="text-xs flex items-center gap-1 text-gray-300 px-3 py-2  hover:text-white transition-colors" to="/docs">
+    Docs <ArrowDownRight className='w-3 rotate-[-90deg] m-0' />
+    </Link>
                     </Box>
                 </Box>
 

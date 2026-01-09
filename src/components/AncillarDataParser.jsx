@@ -228,6 +228,8 @@ export default function AncillaryDataParser() {
         controls.start("hidden").then(() => {
             controls.start("visible");
         });
+
+        document.title = `MediExtract ${appConfig.version} - Personic Health`;
     }, []); // dependency change hote hi animation dobara
 
 
@@ -436,7 +438,7 @@ export default function AncillaryDataParser() {
                 }).then(async (result) => {
                     setData(result);
                     setLoading(false);
-
+                    setProgress(0)
                     setActiveTab(result.parsedGeneral.length > 0 ? "ancillary" : result.parsedTherapies.length > 0 ? "ultramist" : "surgical")
                     toast.success(
                         <div className="flex items-start space-x-3 text-white w-full">
@@ -643,10 +645,10 @@ export default function AncillaryDataParser() {
             >
                 <Container maxWidth="xl" sx={{ py: 6 }}>
 
-                    <motion.div variants={itemVariants}>
+                    {/* <motion.div variants={itemVariants}> */}
 
                         <PremiumHeader />
-                    </motion.div>
+                    {/* </motion.div> */}
                     {error && (
                         <Alert
                             severity="error"

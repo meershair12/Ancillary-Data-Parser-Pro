@@ -4,6 +4,7 @@ import './App.css'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const AncillarDataParserLazy  = lazy(() => import('./components/AncillarDataParser'))
+const MedExtractDocumentationLazy  = lazy(() => import('./components/Documentation'))
 // Variants for the Parent Container
 const containerVariants = {
   // hidden: { opacity: 0, y: 10 },
@@ -18,6 +19,9 @@ const containerVariants = {
 };
 import IOSLoader from './components/WebLoader'
 import { appConfig } from './components/appConfig';
+// import MedExtractDocumentation from './components/Documentation';
+import { ThemeProvider } from '@mui/material';
+import { Route, Routes } from 'react-router'
 
 
 function App() {
@@ -30,6 +34,7 @@ function App() {
 
   return (
     <div className="app-dark-theme">
+
  <Suspense fallback={<IOSLoader />}>
       <AnimatePresence mode="wait">
           <motion.div 
@@ -39,8 +44,15 @@ function App() {
             animate="visible"
             
           >
-            <AncillarDataParserLazy />
+          <Routes>
+
+          
+           
+            <Route path="/" element={<AncillarDataParserLazy />} />
+            <Route path="/docs" element={<MedExtractDocumentationLazy />} />
             
+            
+          </Routes>
           </motion.div>
        
       </AnimatePresence>

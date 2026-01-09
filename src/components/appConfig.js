@@ -1,6 +1,6 @@
 export const appConfig = {
     appName:{first:"Medi", second:"Extract"},
-    version: "v4.7.4",
+    version: "v4.7.5",
     color:{
         primary:"#74B87B"
     }
