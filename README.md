@@ -32,7 +32,7 @@ When generating pending order reports from the EMR (WoundExpert), ensure the cor
 | ---------- | ---------------------- |
 | Ancillary  | June 30, 2025 onward   |
 | Ultramist  | May 1, 2025 onward     |
-| Surgical   | January 1, 2025 onward |
+| Surgical   | January 1, 2026 onward |
 
 ⚠️ **Important:** Selecting an incorrect date range may result in missing or incomplete data.
 
