@@ -20,7 +20,7 @@ import { appConfig } from './appConfig';
 import { Link } from 'react-router';
 import HelpDesk from './HelpDesk';
 
-const MedExtractDocumentation = () => {
+const MediExtractDocumentation = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
 
@@ -34,7 +34,7 @@ const MedExtractDocumentation = () => {
     { id: 'overview', text: 'Overview', icon: Home },
     { id: 'features', text: 'Key Features', icon: BarChart3 },
     { id: 'order-types', text: 'Order Types & Date Rules', icon: Calendar },
-    { id: 'step-by-step', text: 'How to Use MedExtract', icon: Clock },
+    { id: 'step-by-step', text: 'How to Use MediExtract', icon: Clock },
     { id: 'monday-integration', text: 'Monday.com Integration', icon: Zap },
     { id: 'notes', text: 'Notes & Best Practices', icon: Settings },
     // { id: 'helpdesk', text: 'Help Desk', icon: Info  },
@@ -133,7 +133,7 @@ const MedExtractDocumentation = () => {
                     <h2 className="text-3xl font-bold text-white">Overview</h2>
                   </div>
                   <p className="text-gray-300 mb-4 leading-relaxed">
-                    MedExtract is an advanced data processing and parsing platform designed to extract, 
+                    MediExtract is an advanced data processing and parsing platform designed to extract, 
                     normalize, and structure patient order records from EMR systems with{' '}
                     <span className="text-green-600 font-bold">
                       99.9% accuracy
@@ -146,7 +146,7 @@ const MedExtractDocumentation = () => {
                   
                   <div className="mt-8 p-4 bg-[#09090a] border border-gray-700 rounded-xl">
                     <p className="text-gray-200">
-                      <strong className="text-green-600">MedExtract {appConfig.version}</strong> focuses on high-precision parsing of{' '}
+                      <strong className="text-green-600">MediExtract {appConfig.version}</strong> focuses on high-precision parsing of{' '}
                       <strong className="text-green-600">Patient Orders</strong>, enabling healthcare teams to efficiently process{' '}
                       <strong className="text-green-600">Ancillary</strong>, <strong className="text-green-600">Ultramist</strong>, and{' '}
                       <strong className="text-green-600">Surgical</strong> orders with minimal manual intervention.
@@ -228,8 +228,8 @@ const MedExtractDocumentation = () => {
                     <h2 className="text-3xl font-bold text-white">Order Types & Date Rules</h2>
                   </div>
                   
-                  <div className="mb-8 p-4 bg-green-900/20 border border-green-700 rounded-xl">
-                    <p className="text-green-100">
+                  <div className="mb-8 p-4 bg-amber-900/20 border border-amber-700 rounded-xl">
+                    <p className="text-amber-100">
                       <strong>Important:</strong> Selecting an incorrect date range may result in missing or incomplete data.
                     </p>
                   </div>
@@ -247,7 +247,7 @@ const MedExtractDocumentation = () => {
                         {[
                           { type: 'Ancillary', date: 'June 30, 2025 onward' },
                           { type: 'Ultramist', date: 'May 1, 2025 onward' },
-                          { type: 'Surgical', date: 'January 1, 2025 onward' },
+                          { type: 'Surgical', date: 'January 1, 2026 onward' },
                         ].map((row, idx) => (
                           <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
                             <td className="text-gray-200 p-4">
@@ -283,7 +283,7 @@ const MedExtractDocumentation = () => {
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <Clock className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">How to Use MedExtract</h2>
+                    <h2 className="text-3xl font-bold text-white">How to Use MediExtract</h2>
                   </div>
 
                   <div className="space-y-6">
@@ -301,9 +301,9 @@ const MedExtractDocumentation = () => {
                       },
                       {
                         num: 2,
-                        title: 'Upload File to MedExtract',
+                        title: 'Upload File to MediExtract',
                         steps: [
-                          'Open MedExtract '+appConfig.version,
+                          'Open MediExtract '+appConfig.version,
                           'Upload the exported report file',
                           'Select the appropriate State Code (e.g., FL, MD, KY)',
                           'Click Confirm to start processing'
@@ -444,7 +444,7 @@ const MedExtractDocumentation = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-green-600 font-bold">•</span>
-                        MedExtract processing cycle complete
+                        MediExtract processing cycle complete
                       </li>
                     </ul>
                   </div>
@@ -466,7 +466,7 @@ const MedExtractDocumentation = () => {
                   <div className="space-y-6">
                     <div className="p-4 bg-green-900/20 border border-green-700 rounded-xl">
                       <p className="text-green-100">
-                        <strong className="text-green-600">Version Compatibility:</strong> This documentation applies to MedExtract {appConfig.version}
+                        <strong className="text-green-600">Version Compatibility:</strong> This documentation applies to MediExtract {appConfig.version}
                       </p>
                     </div>
 
@@ -497,7 +497,7 @@ const MedExtractDocumentation = () => {
                       </h3>
                       <ul className="list-disc pl-6 space-y-2 text-gray-300 ml-2">
                         <li>Process large files during off-peak hours</li>
-                        <li>Keep MedExtract updated to latest version</li>
+                        <li>Keep MediExtract updated to latest version</li>
                         <li>Verify EMR system compatibility before processing</li>
                         <li>Regularly clear browser cache for optimal performance</li>
                       </ul>
@@ -505,7 +505,7 @@ const MedExtractDocumentation = () => {
 
                     <div className="p-6 bg-[#09090a] rounded-xl border border-gray-700">
                       <p className="text-gray-300 italic">
-                        <strong className="text-green-600">MedExtract {appConfig.version}</strong> ensures efficient, accurate, and scalable patient order data processing from EMR to operational workflows.
+                        <strong className="text-green-600">MediExtract {appConfig.version}</strong> ensures efficient, accurate, and scalable patient order data processing from EMR to operational workflows.
                       </p>
                     </div>
                   </div>
@@ -524,4 +524,4 @@ const MedExtractDocumentation = () => {
   );
 };
 
-export default MedExtractDocumentation;
+export default MediExtractDocumentation;

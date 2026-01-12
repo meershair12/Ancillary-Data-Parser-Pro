@@ -1,6 +1,6 @@
 export const appConfig = {
     appName:{first:"Medi", second:"Extract"},
-    version: "v4.7.6",
+    version: "v4.7.7",
     color:{
         primary:"#74B87B"
     }
@@ -14,5 +14,4 @@ export const theme = ()=>{
         return savedTheme;
     }   
     return  null;
-
 }

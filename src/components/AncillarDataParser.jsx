@@ -229,7 +229,7 @@ export default function AncillaryDataParser() {
             controls.start("visible");
         });
 
-        document.title = `MediExtract ${appConfig.version} - Personic Health`;
+        document.title = `${appConfig.appName.first+appConfig.appName.second} ${appConfig.version} - Personic Health`;
     }, []); // dependency change hote hi animation dobara
 
 
