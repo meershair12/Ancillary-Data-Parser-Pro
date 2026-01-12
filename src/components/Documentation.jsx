@@ -13,10 +13,12 @@ import {
   ChevronDown,
   Cloud,
   Shield,
-  Grid3x3
+  Grid3x3,
+  Info
 } from 'lucide-react';
 import { appConfig } from './appConfig';
 import { Link } from 'react-router';
+import HelpDesk from './HelpDesk';
 
 const MedExtractDocumentation = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -35,6 +37,7 @@ const MedExtractDocumentation = () => {
     { id: 'step-by-step', text: 'How to Use MedExtract', icon: Clock },
     { id: 'monday-integration', text: 'Monday.com Integration', icon: Zap },
     { id: 'notes', text: 'Notes & Best Practices', icon: Settings },
+    // { id: 'helpdesk', text: 'Help Desk', icon: Info  },
   ];
 
   return (
@@ -143,7 +146,7 @@ const MedExtractDocumentation = () => {
                   
                   <div className="mt-8 p-4 bg-[#09090a] border border-gray-700 rounded-xl">
                     <p className="text-gray-200">
-                      <strong className="text-green-600">MedExtract v4.7.5</strong> focuses on high-precision parsing of{' '}
+                      <strong className="text-green-600">MedExtract {appConfig.version}</strong> focuses on high-precision parsing of{' '}
                       <strong className="text-green-600">Patient Orders</strong>, enabling healthcare teams to efficiently process{' '}
                       <strong className="text-green-600">Ancillary</strong>, <strong className="text-green-600">Ultramist</strong>, and{' '}
                       <strong className="text-green-600">Surgical</strong> orders with minimal manual intervention.
@@ -200,7 +203,7 @@ const MedExtractDocumentation = () => {
                       { title: 'Monday.com integration', desc: 'Seamless workspace import' },
                     ].map((feature, index) => (
                       <div key={index} className="flex items-start p-6 bg-[#09090a] rounded-xl border border-gray-700 hover:border-green-600/50 transition-all">
-                        <div className="bg-green-600/20 p-3 rounded-lg mr-4 flex-shrink-0">
+                        <div className="bg-green-600/20 p-3 rounded-lg w-12 text-center mr-4 flex-shrink-0">
                           <span className="text-green-600 font-bold text-lg">✓</span>
                         </div>
                         <div>
@@ -243,10 +246,10 @@ const MedExtractDocumentation = () => {
                       <tbody>
                         {[
                           { type: 'Ancillary', date: 'June 30, 2025 onward' },
-                          { type: 'Ultramist', date: 'May 5, 2025 onward' },
+                          { type: 'Ultramist', date: 'May 1, 2025 onward' },
                           { type: 'Surgical', date: 'January 1, 2025 onward' },
                         ].map((row, idx) => (
-                          <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/30">
+                          <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
                             <td className="text-gray-200 p-4">
                               <span className="inline-block px-3 py-1 rounded-full text-white font-semibold text-sm bg-green-600">
                                 {row.type}
@@ -383,14 +386,14 @@ const MedExtractDocumentation = () => {
                             { type: 'Ultramist', rule: 'Override by MRN' },
                             { type: 'Surgical', rule: 'Override by MRN' },
                           ].map((row, idx) => (
-                            <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/30">
+                            <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
                               <td className="text-gray-200 p-4">
                                 <span className="inline-block px-3 py-1 rounded-full text-white text-sm bg-green-600">
                                   {row.type}
                                 </span>
                               </td>
                               <td className="text-gray-300 p-4">
-                                <span className="inline-block px-3 py-1 rounded-full text-gray-200 text-sm bg-gray-700">
+                                <span className="inline-block px-3 py-1 rounded-full text-gray-200 text-sm bg-zinc-700">
                                   {row.rule}
                                 </span>
                               </td>
@@ -409,7 +412,7 @@ const MedExtractDocumentation = () => {
                       { step: 'Step 8: Start Upload', items: ['Confirm mappings', 'Start the upload', 'Wait for completion'] },
                     ].map((section, idx) => (
                       <details key={idx} className="bg-[#09090a] border border-gray-700 rounded-xl">
-                        <summary className="p-4 cursor-pointer font-bold text-white flex items-center justify-between hover:bg-gray-800">
+                        <summary className="p-4 cursor-pointer font-bold text-white flex items-center justify-between hover:bg-green-800/20">
                           {section.step}
                           <ChevronDown size={20} />
                         </summary>
@@ -509,6 +512,11 @@ const MedExtractDocumentation = () => {
                 </div>
               </div>
             )}
+
+            {/* Help Desk */}
+            {/* {activeSection ==="helpdesk" && (<>
+              <HelpDesk />
+            </>)} */}
           </div>
         </main>
       </div>
