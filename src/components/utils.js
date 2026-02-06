@@ -123,11 +123,11 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             physician: currentPhysician.trim(),
                             dateOrdered,
                             state: stateCode.trim(),
-                            status: (finalDescriptor && typeof finalDescriptor === 'string' &&
-                                (finalDescriptor.includes("Wound microorganism gene identification panel by NAA with probe detection") ||
-                                    finalDescriptor.includes("Bacteria identified")))
-                                ? "Priority Labs (Or other PCR Lab)"
-                                : "",
+                            // status: (finalDescriptor && typeof finalDescriptor === 'string' &&
+                            //     (finalDescriptor.includes("Wound microorganism gene identification panel by NAA with probe detection") ||
+                            //         finalDescriptor.includes("Bacteria identified")))
+                            //     ? "Priority Labs (Or other PCR Lab)"
+                            //     : "",
 
 
                             uid: uid.trim()

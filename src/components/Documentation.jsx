@@ -245,9 +245,9 @@ const MediExtractDocumentation = () => {
                       </thead>
                       <tbody>
                         {[
-                          { type: 'Ancillary', date: 'June 30, 2025 onward' },
+                          { type: 'Ancillary', date: 'Dec 01, 2025 onward' },
                           { type: 'Ultramist', date: 'May 1, 2025 onward' },
-                          { type: 'Surgical', date: 'January 1, 2026 onward' },
+                          { type: 'Surgical', date: 'Jan 1, 2026 onward' },
                         ].map((row, idx) => (
                           <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
                             <td className="text-gray-200 p-4">

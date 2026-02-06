@@ -103,7 +103,7 @@ const columnsBase = [
         editable: true,
     },
     { field: 'state', headerName: 'State', width: 100, editable: true, },
-    { field: 'status', headerName: 'Order/Fax Status', width: 250 },
+    // { field: 'status', headerName: 'Order/Fax Status', width: 250 },
     { field: 'uid', headerName: 'UID', width: 850 }
 ];
 

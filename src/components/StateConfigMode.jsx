@@ -28,6 +28,13 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
     setIsProcessing(false);
 
   };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!isValid || isProcessing) return;
+    await onConfirm();
+  };
+
   return (
     <Modal
       open={open}
@@ -61,17 +68,22 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
               WebkitBackdropFilter: 'blur(30px) saturate(190%)',
             }}
           >
-            <Box sx={{
-              width: 400, // Compact size
-              background: 'rgba(32, 32, 32, 0.27)', // Apple dark glass base
-              borderRadius: '18px',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-              overflow: 'hidden',
-              position: 'relative',
-              outline: 'none',
-              p: 3
-            }}>
+            <Box
+
+              component="form"
+              onSubmit={onSubmit}
+
+              sx={{
+                width: 400, // Compact size
+                background: 'rgba(32, 32, 32, 0.27)', // Apple dark glass base
+                borderRadius: '18px',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                overflow: 'hidden',
+                position: 'relative',
+                outline: 'none',
+                p: 3
+              }}>
 
 
 
@@ -143,6 +155,7 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
                 fullWidth
                 variant="standard"
                 autoFocus
+                disabled={isProcessing}
                 value={stateAbbr}
                 onChange={(e) => setStateAbbr(e.target.value.toUpperCase().slice(0, 2))}
                 placeholder="i.e FL"
@@ -158,7 +171,7 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
 
                 helperText="Enter the 2-letter state abbreviation (e.g., FL, MD, VA)"
                 FormHelperTextProps={{
-                  sx: { fontSize: '12px', color: 'rgba(255,255,255,0.35)', mt: 1, paddingLeft: '5px'}
+                  sx: { fontSize: '12px', color: 'rgba(255,255,255,0.35)', mt: 1, paddingLeft: '5px' }
                 }}
               />
 
@@ -166,6 +179,7 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
               <Stack direction="row" spacing={1.5} mt={4}>
                 <Button
                   fullWidth
+                  disabled={isProcessing}
                   onClick={handleCancel}
                   sx={{
                     height: 42, color: '#fff', fontSize: '13px', textTransform: 'none',
@@ -184,10 +198,10 @@ const AppleGlassModal = ({ open, handleCancel, handleConfirm, selectedFile }) =>
                     height: 42, borderRadius: '12px', background: '#10b981',
                     fontSize: '13px', fontWeight: 600, textTransform: 'none', boxShadow: 'none',
                     '&:hover': { background: '#059669' },
-                    '&.Mui-disabled': { background: 'rgba(16, 185, 129, 0.2)' }
+                    '&.Mui-disabled': { background: 'rgba(7, 95, 66, 0.2)' }
                   }}
                 >
-                  {isProcessing ? <CircularProgress size={16} color="inherit" /> : 'Confirm'}
+                  {isProcessing ? <div className='flex item-center gap-2'> <CircularProgress size={16} color="inherit" /> Processing...</div> : 'Confirm'}
                 </Button>
               </Stack>
             </Box>
