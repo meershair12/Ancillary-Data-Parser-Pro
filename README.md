@@ -1,6 +1,6 @@
 # MediExtract Documentation
 
-**Version:** v4.7.6
+**Version:** v4.7.8
 **Application Name:** MediExtract
 
 ---
@@ -9,7 +9,7 @@
 
 MediExtract is an advanced data processing and parsing platform designed to extract, normalize, and structure patient order records from EMR systems with **99.9% accuracy**. The platform ensures reliable, consistent, and audit-ready data that can be seamlessly integrated into downstream systems such as analytics dashboards and workflow management tools.
 
-MediExtract v4.7.6 focuses on high-precision parsing of **Patient Orders**, enabling healthcare teams to efficiently process **Ancillary**, **Ultramist**, and **Surgical** orders with minimal manual intervention.
+MediExtract v4.7.8 focuses on high-precision parsing of **Patient Orders**, enabling healthcare teams to efficiently process **Ancillary**, **Ultramist**, and **Surgical** orders with minimal manual intervention.
 
 ---
 
@@ -30,9 +30,9 @@ When generating pending order reports from the EMR (WoundExpert), ensure the cor
 
 | Order Type | Start Date Rule        |
 | ---------- | ---------------------- |
-| Ancillary  | June 30, 2025 onward   |
+| Ancillary  | Dec 1, 2025 onward   |
 | Ultramist  | May 1, 2025 onward     |
-| Surgical   | January 1, 2026 onward |
+| Surgical   | Jan 1, 2026 onward |
 
 ⚠️ **Important:** Selecting an incorrect date range may result in missing or incomplete data.
 
@@ -52,7 +52,7 @@ When generating pending order reports from the EMR (WoundExpert), ensure the cor
 
 ### Step 2: Upload File to MediExtract
 
-1. Open **MediExtract v4.7.6**.
+1. Open **MediExtract v4.7.8**.
 2. Upload the exported report file.
 3. Select the appropriate **State Code** (e.g., FL, MD, KY).
 4. Click **Confirm** to start processing.
@@ -142,4 +142,4 @@ Once the upload is complete:
 
 ---
 
-**MediExtract v4.7.6** ensures efficient, accurate, and scalable patient order data processing from EMR to operational workflows.
+**MediExtract v4.7.8** ensures efficient, accurate, and scalable patient order data processing from EMR to operational workflows.
