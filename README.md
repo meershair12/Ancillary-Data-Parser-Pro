@@ -18,6 +18,8 @@ MediExtract v4.7.8 focuses on high-precision parsing of **Patient Orders**, enab
 * High-accuracy EMR data parsing (99.9%)
 * Automated order classification (Ancillary, Ultramist, Surgical)
 * State-based data validation
+* Multi-file upload queue with per-file validation
+* Parallel processing with per-file progress bars
 * Ready-made dashboard views for processed data
 * CSV export for third-party integrations
 * Seamless import into Monday.com workspaces
@@ -53,19 +55,20 @@ When generating pending order reports from the EMR (WoundExpert), ensure the cor
 ### Step 2: Upload File to MediExtract
 
 1. Open **MediExtract v4.7.8**.
-2. Upload the exported report file.
-3. Select the appropriate **State Code** (e.g., FL, MD, KY).
-4. Click **Confirm** to start processing.
+2. Upload one or more exported report files.
+3. Review the file queue and fix any files flagged with errors.
+4. Select the appropriate **State Code** (e.g., FL, MD, KY) per file, or set a **Global State Code**.
+5. Click **Run** to start processing.
 
-⏳ **Processing Time:** Data processing may take some time depending on file size and order volume.
+⏳ **Processing Time:** Processing runs in parallel and each file shows its own progress percentage.
 
 ---
 
 ### Step 3: Review Processed Data
 
-1. Once processing is complete, navigate to the **Dashboard**.
+1. Once processing is complete, the app opens the **Dashboard** automatically.
 2. Review the parsed and structured data.
-3. Select the relevant **Order Type** using the provided buttons:
+3. Select the relevant **Order Type** using the provided buttons, which include counts for the selected state:
 
    * Ancillary
    * Ultramist
@@ -137,6 +140,7 @@ Once the upload is complete:
 
 * Always verify order dates before generating EMR reports.
 * Double-check state codes to avoid validation issues.
+* Invalid files are skipped and remain in the queue with an error message.
 * Review dashboard data before exporting.
 * Ensure column mappings in Monday.com are correct to prevent data misalignment.
 

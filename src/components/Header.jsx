@@ -24,8 +24,10 @@ const EnterpriseHeader = () => {
                 alignItems: 'center',
                 px: 3,
                 py: 1,
-                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                bgcolor: 'rgba(0, 0, 0, 1)'
+                borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                bgcolor: 'rgba(12, 14, 18, 0.55)',
+                backdropFilter: 'blur(18px) saturate(160%)',
+                boxShadow: '0 12px 36px rgba(19, 2, 2, 0.35)'
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -62,17 +64,19 @@ const EnterpriseHeader = () => {
             </Box>
 
             {/* Main Header Body */}
-            <Box sx={{ mt: 6, textAlign: 'center', position: 'relative' }}>
+            <Box sx={{ mt: 6, textAlign: 'center', position: 'relative',  }}>
                 {/* Decorative Background Element */}
                 <Box sx={{
                     position: 'absolute',
                     top: '-50%',
+                    
                     left: '50%',
                     transform: 'translateX(-50%)',
                     width: '400px',
                     height: '200px',
                     background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
                     zIndex: 0,
+                    
                     pointerEvents: 'none'
                 }} />
 
@@ -81,6 +85,7 @@ const EnterpriseHeader = () => {
                         display: 'inline-flex',
                         flexDirection: 'column',
                         alignItems: 'center',
+                        
                         mb: 1,
                     }}>
                         {/* Logo & Core Title Block */}
@@ -89,20 +94,22 @@ const EnterpriseHeader = () => {
                             alignItems: 'center',
                             gap: 3,
                             p: 3,
+                            
                             // borderRadius: '16px',
                             // bgcolor: 'rgba(17, 24, 39, 0.4)',
                             // border: '1px solid rgba(255, 255, 255, 0.08)',
                         }}>
                             <Box sx={{
                                 p: 1.5,
-                                borderRadius: '12px',
-                                background: 'linear-gradient(135deg, #1f8a6865 0%, #000000ff 100%)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                backdropFilter: 'blur(10px)',
+                                borderRadius: '14px',
+                                background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(12, 14, 18, 0.9) 100%)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                backdropFilter: 'blur(14px) saturate(150%)',
                                 display: 'flex',
+                                
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 0px 40px rgba(8, 97, 24, 0.7)'
+                                boxShadow: '0 18px 50px rgba(0, 0, 0, 0.45)'
                             }}>
                                 <img src={Logo} className='w-7' />
                                 {/* <ShieldCheck size={32} color="#10b981" /> */}

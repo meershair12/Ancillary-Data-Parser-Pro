@@ -157,7 +157,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                percentage: Math.min(
         ((processed / totalRows) * 100),
         100
-    ).toFixed(1),
+    ).toFixed(2),
                 processedGeneral: parsedGeneral.length,
                 processedTherapies: parsedTherapies.length,
                 processedSurgical: surgicalOrders.length,
@@ -296,7 +296,7 @@ export function parseAncillaryDataAsync1(rawRows, stateCode, onProgress) {
             }
 
             processed++;
-            const percent = ((processed / totalRows) * 100).toFixed(1);
+            const percent = ((processed / totalRows) * 100).toFixed(2);
             onProgress?.({
                 percentage: percent,
                 processedGeneral: parsedGeneral.length,
@@ -408,7 +408,7 @@ export function parseAncillaryDataAsyncBackup(rawRows, stateCode, onProgress) {
             }
 
             processed++;
-            const percent = ((processed / totalRows) * 100).toFixed(1);
+            const percent = ((processed / totalRows) * 100).toFixed(2);
             onProgress?.({
                 percentage: percent,
                 processedGeneral: parsedGeneral.length,

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Box, Typography, Paper, Button, LinearProgress, Stack } from '@mui/material';
 import { FileCheck, Upload,FileX   } from 'lucide-react';
 import { appConfig } from './appConfig';
+import { toast } from 'react-toastify';
 
 function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
     const [dragActive, setDragActive] = useState(false);
@@ -22,18 +23,56 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
         e.stopPropagation();
         setDragActive(false);
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const file = e.dataTransfer.files[0];
-            setFileName(file.name);
-            onFileUpload(file);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const files = Array.from(e.dataTransfer.files);
+            const validFiles = files.filter(file => 
+                file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || 
+                file.name.endsWith('.xlsx')
+            );
+            
+            if (validFiles.length > 0) {
+                if(validFiles.length > 20) {
+                     alert("Maximum 20 files allowed");
+                     onFileUpload(validFiles.slice(0, 20));
+                     setFileName(`${validFiles.length > 20 ? 20 : validFiles.length} files selected`);
+                } else {
+                    onFileUpload(validFiles);
+                    setFileName(`${validFiles.length} files selected`);
+                }
+            } else {
+                // error handling
+            }
         }
     }, [onFileUpload]);
 
     const handleFileSelect = useCallback((e) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setFileName(file.name);
-            onFileUpload(file);
+        if (e.target.files && e.target.files.length > 0) {
+            const files = Array.from(e.target.files);
+             const validFiles = files.filter(file => 
+                file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || 
+                file.name.endsWith('.xlsx')
+            );
+
+            if (validFiles.length > 0) {
+                 if(validFiles.length > 20) {
+                    toast.warn("Maximum 20 files allowed. Only the first 20 files will be processed.", {
+                        position: "top-right",
+                        autoClose: 5000,
+                        theme:"dark",
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    }); 
+                    // alert("Maximum 20 files allowed");
+                     onFileUpload(validFiles.slice(0, 20));
+                     setFileName(`${validFiles.length > 20 ? 20 : validFiles.length} files selected`);
+                } else {
+                    onFileUpload(validFiles);
+                    setFileName(`${validFiles.length} files selected`);
+                }
+            }
             e.target.value = "";
         }
     }, [onFileUpload]);
@@ -52,13 +91,15 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                 borderRadius: '12px',
                 border: '1px dashed',
                 borderColor: error ? 'rgba(239, 68, 68, 0.2)' : dragActive ? '#10b981' : 'rgba(255, 255, 255, 0.12)',
-                backgroundColor: dragActive ? 'rgba(16, 185, 129, 0.04)' : 'rgba(63, 63, 63, 0.2)',
+                backgroundColor: dragActive ? 'rgba(10, 14, 18, 0.72)' : 'rgba(8, 10, 14, 0.66)',
+                backdropFilter: 'blur(26px) saturate(175%)',
                 transition: 'all 0.2s ease-in-out',
                 maxWidth: '500px', // Ideal Enterprise Width
                 mx: 'auto',
                 '&:hover': {
                     borderColor: 'rgba(16, 185, 129, 0.4)',
-                    backgroundColor: 'rgba(87, 87, 87, 0.25)',
+                    backgroundColor: 'rgba(12, 16, 20, 0.78)',
+                    backdropFilter: 'blur(28px) saturate(185%)',
 
                 }
             }}
@@ -78,6 +119,23 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     }}
                 />
             )}
+            <input
+                type="file"
+                multiple
+                accept=".xlsx"
+                onChange={handleFileSelect}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    opacity: 0,
+                    cursor: 'pointer',
+                    zIndex: 10
+                }}
+            />
+
 
             <Stack direction="row" spacing={3} alignItems="center">
                 {/* Icon Container - Scaled Down */}
@@ -89,7 +147,7 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor:error ? 'rgba(239, 68, 68, 0.1)' : fileName ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                        backgroundColor:error ? 'rgba(239, 68, 68, 0.1)' : fileName ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.14)',
                         border: '1px solid',
                         borderColor: error ? 'rgba(239, 68, 68, 0.2)' : fileName ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                         transition: 'all 0.2s ease-in-out',
@@ -106,7 +164,7 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                 {/* Text Content - Aligned Left for scanability */}
                 <Box sx={{ flexGrow: 1, textAlign: 'left', maxWidth: '60%' }}>
                     <Typography
-                        title={fileName ? fileName : "Upload File Here"}
+                        title={fileName ? fileName : "Upload Files Here"}
                         sx={{
                             color: '#f3f4f6',
                             fontWeight: 600,
@@ -118,10 +176,10 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                             maxWidth: '100%' // or set a fixed width if needed
                         }}
                     >
-                        {fileName ? fileName : "Upload File Here"}
+                        {fileName ? fileName : "Upload Files Here"}
                     </Typography>
                     <Typography sx={{ color: error ? '#ef4444' : '#6b7280', fontSize: '0.75rem', mt: 0.2 }}>
-                        {error ? "File couldn't be processed" : fileName ? "File ready for parsing" : "Drag and drop or browse .xlsx"}
+                        {error ? "File couldn't be processed" : fileName ? "File ready for parsing" : "Drag and drop or browse .xlsx (Multiple files support)"}
                     </Typography>
                 </Box>
 

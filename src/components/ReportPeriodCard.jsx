@@ -2,7 +2,9 @@ import React from 'react';
 import { Box, Card, CardContent, Typography, Chip, Stack } from '@mui/material';
 import { Calendar, ArrowRight, ChevronRight } from 'lucide-react';
 
-const ReportPeriodCard = ({ dateRange, stateAbbr }) => {
+const ReportPeriodCard = ({ dateRange, stateAbbr, reportList = [] }) => {
+  const showList = Array.isArray(reportList) && reportList.length > 0;
+
   return (
     <Card
       elevation={0}
@@ -65,30 +67,59 @@ const ReportPeriodCard = ({ dateRange, stateAbbr }) => {
           />
         </Stack>
 
-        {/* Date Display: Segmented iOS look */}
-        <Box className="flex items-center justify-between p-4 rounded-[18px] bg-black/30 border border-white/5 relative">
-          <Box className="flex flex-col">
-            <span className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest mb-1">
-              From
-            </span>
-            <span className="text-[15px] font-semibold text-white tracking-tight font-sans">
-              {dateRange.startDate}
-            </span>
+        {showList ? (
+          <Box
+            className="flex flex-col gap-1.5 rounded-[18px] bg-black/30 border border-white/5 relative"
+            sx={{
+              p: 1.5,
+              maxHeight: 180,
+              overflowY: 'auto'
+            }}
+          >
+            {reportList.map((entry, index) => (
+              <Box
+                key={`${entry.state}-${index}`}
+                className="flex items-center justify-between rounded-[10px] px-2.5 py-1.5 bg-white/5"
+              >
+                <Box className="flex flex-col">
+                  <span className="text-[11px] font-bold text-white tracking-wide">
+                    {entry.state}
+                  </span>
+                  <span className="text-[10px] text-white/60">
+                    {entry.startDate} - {entry.endDate}
+                  </span>
+                </Box>
+                <Box className="flex items-center justify-center w-6 h-6 rounded-full bg-white/5">
+                  <ChevronRight size={12} className="text-white/20" />
+                </Box>
+              </Box>
+            ))}
           </Box>
+        ) : (
+          <Box className="flex items-center justify-between p-4 rounded-[18px] bg-black/30 border border-white/5 relative">
+            <Box className="flex flex-col">
+              <span className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest mb-1">
+                From
+              </span>
+              <span className="text-[15px] font-semibold text-white tracking-tight font-sans">
+                {dateRange.startDate}
+              </span>
+            </Box>
 
-          <Box className="flex items-center justify-center w-7 h-7 rounded-full bg-white/5">
-            <ChevronRight size={14} className="text-white/20" />
-          </Box>
+            <Box className="flex items-center justify-center w-7 h-7 rounded-full bg-white/5">
+              <ChevronRight size={14} className="text-white/20" />
+            </Box>
 
-          <Box className="flex flex-col text-right">
-            <span className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest mb-1">
-              To
-            </span>
-            <span className="text-[15px] font-semibold text-white tracking-tight font-sans">
-              {dateRange.endDate}
-            </span>
+            <Box className="flex flex-col text-right">
+              <span className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest mb-1">
+                To
+              </span>
+              <span className="text-[15px] font-semibold text-white tracking-tight font-sans">
+                {dateRange.endDate}
+              </span>
+            </Box>
           </Box>
-        </Box>
+        )}
 
         
       </CardContent>
