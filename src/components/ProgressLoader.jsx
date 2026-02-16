@@ -24,11 +24,15 @@ const LoadingModal = ({ progress }) => {
     { label: 'Finalizing', threshold: 80 },
   ];
 
+  const numericPercentage = Number(progress?.percentage || 0);
+  const safePercentage = Number.isFinite(numericPercentage) ? numericPercentage : 0;
+  const displayPercentage = safePercentage.toFixed(2);
+
   const currentStepIndex = steps.reduce((acc, step, idx) => (
-    progress.percentage >= step.threshold ? idx : acc
+    safePercentage >= step.threshold ? idx : acc
   ), 0);
 
-  const isOpen = progress.percentage >= 0 && progress.percentage < 100;
+  const isOpen = safePercentage >= 0 && safePercentage < 100;
 
   return (
     <Dialog 
@@ -69,7 +73,7 @@ const LoadingModal = ({ progress }) => {
             {/* Active Progress with Glow */}
             <CircularProgress
               variant="determinate"
-              value={Number(progress.percentage) || 0}
+              value={safePercentage}
               size={72}
               thickness={3}
               sx={{
@@ -85,7 +89,7 @@ const LoadingModal = ({ progress }) => {
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
-                {progress.percentage ?`${progress.percentage}%`:'0%' }
+                {`${displayPercentage}%`}
               </Typography>
             </Box>
           </Box>
@@ -128,7 +132,7 @@ const LoadingModal = ({ progress }) => {
         <Box sx={{ px: 1 }}>
           <LinearProgress 
             variant="determinate" 
-            value={progress.percentage || 0} 
+            value={safePercentage} 
             sx={{ 
               height: 4, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.05)',
               mb: 2,

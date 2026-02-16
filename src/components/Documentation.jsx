@@ -198,6 +198,8 @@ const MediExtractDocumentation = () => {
                       { title: 'High-accuracy EMR data parsing', desc: '99.9% accuracy rate' },
                       { title: 'Automated order classification', desc: 'Ancillary, Ultramist, Surgical' },
                       { title: 'State-based data validation', desc: 'FL, MD, KY and more' },
+                      { title: 'Multi-file upload queue', desc: 'Validate and track many files at once' },
+                      { title: 'Parallel processing', desc: 'Per-file progress with overall status' },
                       { title: 'Ready-made dashboard views', desc: 'Processed data visualization' },
                       { title: 'CSV export', desc: 'Third-party integrations' },
                       { title: 'Monday.com integration', desc: 'Seamless workspace import' },
@@ -245,9 +247,9 @@ const MediExtractDocumentation = () => {
                       </thead>
                       <tbody>
                         {[
-                          { type: 'Ancillary', date: 'Dec 01, 2025 onward' },
-                          { type: 'Ultramist', date: 'May 1, 2025 onward' },
-                          { type: 'Surgical', date: 'Jan 1, 2026 onward' },
+                          { type: 'Ancillary', date: 'TBD (Team Lead to confirm)' },
+                          { type: 'Ultramist', date: 'TBD (Team Lead to confirm)' },
+                          { type: 'Surgical', date: 'TBD (Team Lead to confirm)' },
                         ].map((row, idx) => (
                           <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
                             <td className="text-gray-200 p-4">
@@ -257,8 +259,8 @@ const MediExtractDocumentation = () => {
                             </td>
                             <td className="text-gray-300 p-4">{row.date}</td>
                             <td className="p-4">
-                              <span className="inline-block px-3 py-1 rounded-full text-white font-semibold text-sm bg-green-700">
-                                Active
+                              <span className="inline-block px-3 py-1 rounded-full text-white font-semibold text-sm bg-amber-600">
+                                Pending
                               </span>
                             </td>
                           </tr>
@@ -268,8 +270,8 @@ const MediExtractDocumentation = () => {
                   </div>
 
                   <p className="text-gray-400 mt-8 p-4 bg-[#09090a] rounded-lg border border-gray-700">
-                    When generating pending order reports from the EMR (WoundExpert), ensure the correct 
-                    <strong className="text-gray-200"> start date</strong> is selected based on the order type.
+                    Start date rules are pending confirmation by the team lead. Please wait for the final values
+                    before generating reports.
                   </p>
                 </div>
               </div>
@@ -304,19 +306,20 @@ const MediExtractDocumentation = () => {
                         title: 'Upload File to MediExtract',
                         steps: [
                           'Open MediExtract '+appConfig.version,
-                          'Upload the exported report file',
-                          'Select the appropriate State Code (e.g., FL, MD, KY)',
-                          'Click Confirm to start processing'
+                          'Upload one or more exported report files',
+                          'Fix any files flagged with errors in the queue',
+                          'Select a State Code per file, or apply a Global State Code',
+                          'Click Run to start processing'
                         ],
-                        alert: 'Data processing may take some time depending on file size and order volume.'
+                        alert: 'Processing runs in parallel and each file shows its own progress percentage.'
                       },
                       {
                         num: 3,
                         title: 'Review Processed Data',
                         steps: [
-                          'Once processing is complete, navigate to the Dashboard',
+                          'Once processing is complete, the Dashboard opens automatically',
                           'Review the parsed and structured data',
-                          'Select the relevant Order Type using the provided buttons'
+                          'Select the relevant Order Type using the provided buttons with counts'
                         ],
                         alert: 'Please review the data carefully to ensure all records are accurate and complete.'
                       },
@@ -479,6 +482,7 @@ const MediExtractDocumentation = () => {
                         {[
                           'Always verify order dates before generating EMR reports',
                           'Double-check state codes to avoid validation issues',
+                          'Invalid files are skipped and remain in the queue with an error message',
                           'Review dashboard data before exporting',
                           'Ensure column mappings in Monday.com are correct'
                         ].map((check, i) => (

@@ -1,8 +1,96 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  color-scheme: dark;
+  --glass-bg: rgba(12, 14, 20, 0.64);
+  --glass-bg-strong: rgba(8, 10, 14, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+  --accent: #8ab4ff;
+  --accent-strong: #4f8cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", "Space Grotesk", sans-serif;
+  background: radial-gradient(circle at 15% 20%, rgba(79, 140, 255, 0.16), transparent 35%),
+    radial-gradient(circle at 85% 12%, rgba(86, 98, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 50% 88%, rgba(22, 163, 255, 0.08), transparent 45%),
+    linear-gradient(160deg, #03050a 0%, #05070d 45%, #060913 100%);
+  color: #e5e7eb;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto -10%;
+  height: 70vh;
+  z-index: -1;
+  filter: blur(120px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+body::before {
+  background: radial-gradient(circle at top, rgba(79, 140, 255, 0.2), transparent 70%);
+  animation: glassFloat 16s ease-in-out infinite;
+}
+
+body::after {
+  inset: auto -10% -20% -10%;
+  background: radial-gradient(circle at bottom, rgba(22, 163, 255, 0.12), transparent 70%);
+  animation: glassFloat 20s ease-in-out infinite reverse;
+}
+
+.glass-surface {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-surface-strong {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-highlight);
+  border-radius: 24px;
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes glassFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(16px) scale(1.03);
+  }
+}
 
 .MuiDataGrid-main > :last-child {
   display: none !important;
 }
+
+   .MuiDataGrid-paper {
+      backdrop-filter: blur(8px) saturate(150%) !important;
+      background: rgba(49, 49, 49, 0.575) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+      border-radius: 16px !important;
+    }
