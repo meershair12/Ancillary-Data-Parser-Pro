@@ -8,7 +8,7 @@ const ReportPeriodCard = ({ dateRange, stateAbbr, reportList = [] }) => {
   return (
     <Card
       elevation={0}
-      className="group transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/10"
+      className="group transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/10 "
       sx={{
         background: 'rgba(28, 28, 30, 0.6)', // iPhone Dark Mode background
         backdropFilter: 'blur(30px) saturate(190%)',
@@ -33,7 +33,7 @@ const ReportPeriodCard = ({ dateRange, stateAbbr, reportList = [] }) => {
         background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
       }} />
 
-      <CardContent sx={{ p: '20px !important' }}>
+      <CardContent sx={{ p: '10px !important' }}>
         {/* Header Section */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
           <Stack direction="row" spacing={1.2} alignItems="center">
@@ -72,7 +72,7 @@ const ReportPeriodCard = ({ dateRange, stateAbbr, reportList = [] }) => {
             className="flex flex-col gap-1.5 rounded-[18px] bg-black/30 border border-white/5 relative"
             sx={{
               p: 1.5,
-              maxHeight: 180,
+              maxHeight: 200,
               overflowY: 'auto'
             }}
           >

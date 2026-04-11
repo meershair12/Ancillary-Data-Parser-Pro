@@ -27,22 +27,60 @@ export function getLatestByMRN(data, dateKey = 'dateOrdered') {
 }
 
 
-export function excelDateToEST(excelSerialDate) {
-    // Use 1899-12-31 as the correct base date
-    const utcDate = new Date(Date.UTC(1899, 11, 31) + excelSerialDate * 86400000);
+// export function excelDateToEST(excelSerialDate) {
+//     // Use 1899-12-31 as the correct base date
 
-    // Convert to EST or EDT depending on date
-    const estDate = new Intl.DateTimeFormat('en-US', {
+//     const utcDate = new Date(Date.UTC(1899, 11, 31) + excelSerialDate * 86400000);
+
+//     // Convert to EST or EDT depending on date
+//     const estDate = new Intl.DateTimeFormat('en-US', {
+//         timeZone: 'America/New_York',
+//         year: 'numeric',
+//         month: '2-digit',
+//         day: '2-digit'
+//     }).format(utcDate);
+
+//     return estDate;
+// }
+
+export function excelDateToEST(input) {
+    let date;
+
+    if (!input) return "";
+
+    // Case 1: Excel serial number
+    if (!isNaN(input)) {
+        const utcDate = new Date(Date.UTC(1899, 11, 31) + Number(input) * 86400000);
+        date = utcDate;
+    } 
+    // Case 2: String date (mm/dd/yyyy or m/d/yyyy)
+    else if (typeof input === "string") {
+        const parts = input.split("/");
+
+        if (parts.length === 3) {
+            let [month, day, year] = parts;
+
+            // Create LOCAL date (no UTC shift)
+            date = new Date(Number(year), Number(month) - 1, Number(day));
+        } else {
+            return "";
+        }
+    } else {
+        return "";
+    }
+
+    // Format in EST/EDT
+    return new Intl.DateTimeFormat('en-US', {
         timeZone: 'America/New_York',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
-    }).format(utcDate);
-
-    return estDate;
+    }).format(date);
 }
-
 export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
+
+
+   
     return new Promise((resolve) => {
         const bloodTests = new Set([
             "Comprehensive metabolic 2000 panel - Serum or Plasma",
@@ -54,10 +92,11 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
             "Prealbumin [Mass/volume] in Serum or Plasma"
         ]);
 
-        const parsedGeneral = [];
-        const parsedTherapies = [];
-        const surgicalOrders = [];
-        const npNames = [];
+        const parsedGeneral = [],
+         parsedTherapies = [],
+         surgicalOrders = [],
+         woundSurveillanceVisits = [],
+         npNames = [];
 
         let currentPhysician = "";
         let currentPatient = "";
@@ -114,6 +153,11 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
 
                             uid = `${currentMRN}_${finalDescriptor}`;
                         }
+                        if (currentCategory.toLowerCase() === "laboratory" &&
+                            descriptor.toLowerCase() === "observation update status") {
+
+                            uid = `${currentMRN}_${finalDescriptor}`;
+                        }
                         const record = {
                             id: i - 7,
                             patientName: currentPatient.trim(),
@@ -141,6 +185,10 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             descriptor.toLowerCase() === "debridement method wound") {
                             surgicalOrders.push(record);
                         }
+                        else if (currentCategory.toLowerCase() === "laboratory" &&
+                            descriptor.toLowerCase() === "observation update status") {
+                            woundSurveillanceVisits.push(record);
+                        }
                         else {
                             parsedGeneral.push(record);
                         }
@@ -161,6 +209,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                 processedGeneral: parsedGeneral.length,
                 processedTherapies: parsedTherapies.length,
                 processedSurgical: surgicalOrders.length,
+                processedSurveillance: woundSurveillanceVisits.length,
                 totalProcessed: processed,
                 totalRows
             });
@@ -181,12 +230,14 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                     parsedGeneral: unique(parsedGeneral),
                     parsedTherapies: unique(getLatestByMRN(parsedTherapies)),
                     parsedSurgical: unique(getLatestByMRN(surgicalOrders)),
+                    parsedSurveillanceVisits: unique(getLatestByMRN(woundSurveillanceVisits)),
                     npNames,
                     summary: {
                         generalCount: parsedGeneral.length,
                         therapiesCount: parsedTherapies.length,
                         surgicalCount: surgicalOrders.length,
-                        totalCount: parsedGeneral.length + parsedTherapies.length + surgicalOrders.length
+                        surveillanceCount: woundSurveillanceVisits.length,
+                        totalCount: parsedGeneral.length + parsedTherapies.length + surgicalOrders.length+woundSurveillanceVisits.length
                     }
                 });
             }

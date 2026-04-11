@@ -22,7 +22,7 @@ import { appConfig } from './components/appConfig';
 // import MedExtractDocumentation from './components/Documentation';
 import { ThemeProvider } from '@mui/material';
 import { Route, Routes } from 'react-router'
-
+import UpdateNotification from './components/UpdateNotification'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -54,9 +54,10 @@ function App() {
             
           </Routes>
           </motion.div>
-       
       </AnimatePresence>
+      <UpdateNotification />
  </Suspense>
+       
     </div>
   )
 }

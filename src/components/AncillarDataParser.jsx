@@ -29,6 +29,7 @@ import {
   Droplets,
   FileSpreadsheet,
   MapPin,
+  RefreshCcw,
   Scissors,
   Syringe,
   Trash2,
@@ -63,7 +64,6 @@ import ReportPeriodCard from "./ReportPeriodCard";
 import AppleGlassInput from "./AppleGlassInput";
 import GlassFileHeader from "./GlassFileHeader";
 import { appConfig } from "./appConfig";
-import BackgroundImage from "../assets/bg.webp";
 // Variants for the Parent Container
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -345,6 +345,10 @@ const tabConfig = {
     label: "Ultramist Debridement Orders",
     icon: <Droplets className="w-4 h-4 mr-2" />,
   },
+  surveillance: {
+    label: "Wound Surveillance Visits Orders",
+    icon: <Droplets className="w-4 h-4 mr-2" />,
+  },
 };
 
 // Main Component
@@ -423,29 +427,53 @@ export default function AncillaryDataParser() {
     try {
       setIsDeleting(true);
 
+
       let updatedRows = { ...data };
+
 
       if (activeTab === "ancillary" || activeTab === "mainsheet") {
         updatedRows.parsedGeneral = (data.parsedGeneral || []).filter(
           (row) => !selectedIds.ids.has(row.id),
         );
       }
-      if (activeTab === "ultramist" || activeTab === "mainsheet") {
+      else if (activeTab === "ultramist") {
         updatedRows.parsedTherapies = (data.parsedTherapies || []).filter(
           (row) => !selectedIds.ids.has(row.id),
         );
       }
-      if (activeTab === "surgical" || activeTab === "mainsheet") {
+      else if (activeTab === "surgical") {
         updatedRows.parsedSurgical = (data.parsedSurgical || []).filter(
           (row) => !selectedIds.ids.has(row.id),
         );
       }
+      else if (activeTab === "surveillance") {
+        updatedRows.parsedWoundSurveilance = (data.parsedWoundSurveilance || []).filter(
+          (row) => !selectedIds.ids.has(row.id),
+        );
+      }
+
 
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       setIsDeleting(false);
       setData(updatedRows);
       setSelectedIds({ type: "include", ids: new Set() });
+       toast.success(
+        <div className="flex items-center gap-2">
+          <Trash2 size={20} className="text-green-600" />
+          Deleted successfully!
+        </div>,
+        {
+          position: "top-center",
+          theme: "dark",
+          autoClose: 2000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        },
+      );
     } catch (error) {
       console.error("Delete error:", error);
       toast.error(
@@ -466,22 +494,7 @@ export default function AncillaryDataParser() {
       );
       setIsDeleting(false);
     } finally {
-      toast.success(
-        <div className="flex items-center gap-2">
-          <Trash2 size={20} className="text-green-600" />
-          Deleted successfully!
-        </div>,
-        {
-          position: "top-center",
-          theme: "dark",
-          autoClose: 2000,
-          hideProgressBar: true,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        },
-      );
+     
       setIsSelect(false);
       setIsDeleting(false);
     }
@@ -492,9 +505,11 @@ export default function AncillaryDataParser() {
     if (!data) return [];
 
     let rows = [];
+
     if (activeTab === "ancillary") rows = data.parsedGeneral || [];
     else if (activeTab === "surgical") rows = data.parsedSurgical || [];
     else if (activeTab === "ultramist") rows = data.parsedTherapies || [];
+    else if (activeTab === "surveillance") rows = data.parsedWoundSurveilance || [];
     else if (activeTab === "mainsheet") {
       // Combine all
       rows = [
@@ -731,6 +746,8 @@ export default function AncillaryDataParser() {
       const stateToUse = fileObj.stateCode || globalStateCode || "UNK";
       const parsed = await parseAncillaryDataAsync(jsonData, stateToUse);
 
+
+
       const previewColumns = [
         { field: "type", headerName: "Type", width: 120 },
         { field: "patientName", headerName: "Name", minWidth: 160, flex: 1 },
@@ -754,6 +771,10 @@ export default function AncillaryDataParser() {
         ...(parsed.parsedTherapies || []).map((r) => ({
           ...r,
           type: "Ultramist",
+        })),
+        ...(parsed.parsedSurveillanceVisits || []).map((r) => ({
+          ...r,
+          type: "Surveillance",
         })),
       ];
 
@@ -817,6 +838,7 @@ export default function AncillaryDataParser() {
     let mergedGeneral = [];
     let mergedTherapies = [];
     let mergedSurgical = [];
+    let mergedWoundSurveilance = [];
 
     let allSummary = {
       totalParsedCount: 0,
@@ -896,6 +918,7 @@ export default function AncillaryDataParser() {
           const uniqueGeneral = filterUnique(result.parsedGeneral);
           const uniqueTherapies = filterUnique(result.parsedTherapies);
           const uniqueSurgical = filterUnique(result.parsedSurgical);
+          const uniqueWoundSurveillance = filterUnique(result.parsedSurveillanceVisits);
 
           progressById.set(fileObj.id, 100);
           setUploadedFiles((prev) =>
@@ -919,6 +942,7 @@ export default function AncillaryDataParser() {
             uniqueGeneral,
             uniqueTherapies,
             uniqueSurgical,
+            uniqueWoundSurveillance,
             summary: result.summary,
           };
         } catch (err) {
@@ -953,6 +977,12 @@ export default function AncillaryDataParser() {
           id: crypto.randomUUID(),
         })),
       );
+      mergedWoundSurveilance.push(
+        ...result.uniqueWoundSurveillance.map((r) => ({
+          ...r,
+          id: crypto.randomUUID(),
+        })),
+      );
 
       if (!dateRange.startDate && result.reportPeriod) {
         setDateRange({
@@ -969,17 +999,20 @@ export default function AncillaryDataParser() {
       parsedGeneral: mergedGeneral,
       parsedTherapies: mergedTherapies,
       parsedSurgical: mergedSurgical,
+      parsedWoundSurveilance: mergedWoundSurveilance,
       summary: {
         totalParsedCount:
           mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
         generalParsedCount: mergedGeneral.length,
         therapiesParsedCount: mergedTherapies.length,
         surgicalParsedCount: mergedSurgical.length,
+        woundSurveillanceParsedCount: mergedWoundSurveilance.length,
         totalCount:
           mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
         generalCount: mergedGeneral.length,
         therapiesCount: mergedTherapies.length,
         surgicalCount: mergedSurgical.length,
+        woundSurveillanceCount: mergedWoundSurveilance.length,
       },
     });
 
@@ -1161,8 +1194,9 @@ export default function AncillaryDataParser() {
     const ancillary = filterByState(data.parsedGeneral || []).length;
     const surgical = filterByState(data.parsedSurgical || []).length;
     const ultramist = filterByState(data.parsedTherapies || []).length;
+    const surveillance = filterByState(data.parsedWoundSurveilance || []).length;
 
-    return { ancillary, surgical, ultramist };
+    return { ancillary, surgical, ultramist, surveillance };
   }, [data, filterState]);
 
   const hasProcessableFiles = useMemo(
@@ -1182,12 +1216,12 @@ export default function AncillaryDataParser() {
           position: "relative",
           overflow: "hidden",
           // backgroundImage: `linear-gradient(135deg, rgba(6, 9, 16, 0.88) 0%, rgba(7, 12, 18, 0.92) 45%, rgba(5, 10, 14, 0.85) 100%), url(${BackgroundImage})`,
-          backgroundImage: `url(${BackgroundImage})`,
+          // backgroundImage: `url(${BackgroundImage})`,
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          // backgroundColor: "#0a0a0a",
+          backgroundColor: "#0a0a0a",
           // backgroundImage: `
           //             radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%), 
           //             radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
@@ -1206,8 +1240,9 @@ export default function AncillaryDataParser() {
           },
         }}
       >
-        <Container maxWidth="xl" sx={{ py: 6 }}>
-          <PremiumHeader />
+        <Container maxWidth="xl" sx={{ py: !data ? 6:2 }}>
+
+          {!data && <PremiumHeader />}
           {error && (
             <Alert
               severity="error"
@@ -1269,12 +1304,21 @@ export default function AncillaryDataParser() {
                           Configuration
                         </Typography>
                         <Box
-                          sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                          sx={{ display: "flex", gap: 1, alignItems: "center" }}
                         >
+                        <Button
+                          startIcon={<RefreshCcw className="w-5 h-5" />}
+                          color="error"
+                          onClick={handleReset}
+                          size="small"
+                        >
+                           Reset
+                        </Button>
                           {/* Add File Button - Hidden Input Trick */}
                           <Button
                             variant="outlined"
                             component="label"
+                            size="small"
                             startIcon={<CloudUpload />}
                             sx={{
                               borderColor: "rgba(255,255,255,0.2)",
@@ -1300,55 +1344,11 @@ export default function AncillaryDataParser() {
                             />
                           </Button>
 
-                          {/* <Autocomplete
-                            disableClearable
-                            freeSolo
-                            options={US_STATE_CODES}
-                            value={globalStateCode || ""}
-                            inputValue={globalStateCode || ""}
-                            ListboxProps={{
-                              sx: {
-                                maxHeight: 220,
-                                scrollbarWidth: "none",
-                                "&::-webkit-scrollbar": { display: "none" },
-                              },
-                            }}
-                            onInputChange={(event, newValue, reason) => {
-                              if (reason === "input" || reason === "clear") {
-                                applyGlobalStateCode(newValue || "");
-                              }
-                            }}
-                            onChange={(event, newValue) => {
-                              applyGlobalStateCode(newValue || "");
-                            }}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                size="small"
-                                label="Global State Code"
-                                inputProps={{
-                                  ...params.inputProps,
-                                  maxLength: 2,
-                                  style: { textTransform: "uppercase" },
-                                    
-                                }}
-                                sx={{
-                                  width: "10ch",
-                                  "& .MuiInputBase-root": {
-                                    minHeight: 30,
-                                    borderRadius: 5 ,
-                                    fontSize: "0.78rem",
-                                  },
-                                  "& .MuiInputLabel-root": {
-                                    fontSize: "0.72rem",
-                                  },
-                                }}
-                              />
-                            )}
-                          /> */}
+                          
                           <Button
                             variant="contained"
                             color="primary"
+                            size="small"
                             onClick={processAllFiles}
                             startIcon={<Assessment />}
                             disabled={
@@ -2087,19 +2087,18 @@ export default function AncillaryDataParser() {
             </Box>
           ) : (
             <>
+            <Grid container spacing={2}>
+             <Grid item size={{ xs: 12, lg: 10 }}>
               <GlassFileHeader
                 fileName={`${uploadedFiles.length} Files Processed`}
                 handleReset={handleReset}
               />
-
-              <Grid container spacing={3} sx={{ mb: 1 }}>
-                <Grid item size={{ xs: 12, lg: 9 }}>
-                  <StatsCards
+               <StatsCards
                     summary={data.summary}
                     setActiveTab={setActiveTab}
                   />
-                </Grid>
-                <Grid item size={{ xs: 12, lg: 3 }}>
+             </Grid>
+              <Grid item size={{ xs: 12, lg: 2 }}>
                   <ReportPeriodCard
                     dateRange={reportCardDateRange}
                     reportList={
@@ -2128,43 +2127,55 @@ export default function AncillaryDataParser() {
                     }}
                   >
                     {(() => {
+
                       const tabStyles = {
                         ancillary: {
                           bg: "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
                           border: "rgba(16, 185, 129, 0.7)",
                           shadow: "0 8px 20px rgba(16, 185, 129, 0.28)",
-                          hover:
-                            "linear-gradient(135deg, #10b981 0%, #10b981 100%)",
+                          hover: "linear-gradient(135deg, #10b981 0%, #10b981 100%)",
                         },
                         surgical: {
                           bg: "linear-gradient(135deg, #fb7185 0%, #ef4444 100%)",
                           border: "rgba(239, 68, 68, 0.7)",
                           shadow: "0 8px 20px rgba(239, 68, 68, 0.25)",
-                          hover:
-                            "linear-gradient(135deg, #ef4444 0%, #ef4444 100%)",
+                          hover: "linear-gradient(135deg, #ef4444 0%, #ef4444 100%)",
                         },
                         ultramist: {
                           bg: "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)",
                           border: "rgba(14, 165, 233, 0.7)",
                           shadow: "0 8px 20px rgba(14, 165, 233, 0.25)",
-                          hover:
-                            "linear-gradient(135deg, #0ea5e9 0%, #0ea5e9 100%)",
+                          hover: "linear-gradient(135deg, #0ea5e9 0%, #0ea5e9 100%)",
+                        },
+                        surveillance: {
+                          bg: "linear-gradient(135deg, #7b38f8 0%, #5b0ee9 100%)",
+                          border: "rgba(116, 14, 233, 0.7)",
+                          shadow: "0 8px 20px rgba(14, 165, 233, 0.25)",
+                          hover: "linear-gradient(135deg, #7f0ee9 0%, #860ee9 100%)",
                         },
                       };
                       return [
                         {
                           id: "ancillary",
                           label: `Ancillary (${tabCounts.ancillary.toLocaleString()})`,
+                          value: tabCounts.ancillary
                         },
                         {
                           id: "surgical",
                           label: `Surgical (${tabCounts.surgical.toLocaleString()})`,
+                          value: tabCounts.surgical
                         },
                         {
                           id: "ultramist",
                           label: `Ultramist (${tabCounts.ultramist.toLocaleString()})`,
+                          value: tabCounts.ultramist
                         },
-                      ].map((tab) => {
+                        {
+                          id: "surveillance",
+                          label: `Surveillance (${tabCounts.surveillance.toLocaleString()})`,
+                          value: tabCounts.surveillance
+                        },
+                      ].filter(v => v.value != 0).map((tab) => {
                         const isActive = activeTab === tab.id;
                         const style = tabStyles[tab.id];
                         return (
@@ -2281,7 +2292,7 @@ export default function AncillaryDataParser() {
               <Paper
                 elevation={0}
                 sx={{
-                  height: 700,
+                 height: `calc(100vh - 390px)`,
                   borderRadius: 0,
                   background: "rgba(12, 14, 18, 0.6)",
                   backdropFilter: "blur(24px) saturate(150%)",
@@ -2291,7 +2302,7 @@ export default function AncillaryDataParser() {
 
                 }}
               >
-              
+
                 <DataGridPro
                   rows={currentData}
                   columns={columns}
@@ -2309,7 +2320,7 @@ export default function AncillaryDataParser() {
                   slotProps={{
                     toolbar: {
                       csvOptions: {
-                        fileName: `${tabConfig[activeTab]?.label?.split(" ")?.join("_")}_${filterState =="ALL" ? availableStates?.join("_") : filterState}_${getESTDateAndPeriodLabel().estDate}`,
+                        fileName: `${tabConfig[activeTab]?.label?.split(" ")?.join("_")}_${filterState == "ALL" ? availableStates?.join("_") : filterState}_${getESTDateAndPeriodLabel().estDate}`,
                       },
 
 
@@ -2317,9 +2328,10 @@ export default function AncillaryDataParser() {
                   }}
                   sx={{
                     border: "none",
+                    background:"#131313",
                     color: "#e5e7eb",
                     "& .MuiDataGrid-columnHeaders": {
-                      background: "rgba(8, 3, 3, 0.91)",
+                      background: "rgb(8, 3, 3)",
                       borderBottom: "1px solid rgba(29, 27, 27, 0.45)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
@@ -2328,7 +2340,7 @@ export default function AncillaryDataParser() {
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-pinnedColumns": {
-                      background: "rgba(6, 8, 12, 0.82)",
+                      background: "rgba(12, 11, 6, 0.98)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-cell--pinnedLeft": {
@@ -2365,6 +2377,7 @@ export default function AncillaryDataParser() {
                   rowSelectionModel={selectedIds}
 
                 />
+              </Paper>
                 <FloatingDeleteButton
                   setSelectedIds={setSelectedIds}
                   setIsSelect={setIsSelect}
@@ -2374,7 +2387,6 @@ export default function AncillaryDataParser() {
                   handleDelete={handleDelete}
                   selectedCount={selectedIds.ids.size}
                 />
-              </Paper>
             </>
           )}
         </Container>

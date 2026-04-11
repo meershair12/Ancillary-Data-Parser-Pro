@@ -148,7 +148,7 @@ const MediExtractDocumentation = () => {
                     <p className="text-gray-200">
                       <strong className="text-green-600">MediExtract {appConfig.version}</strong> focuses on high-precision parsing of{' '}
                       <strong className="text-green-600">Patient Orders</strong>, enabling healthcare teams to efficiently process{' '}
-                      <strong className="text-green-600">Ancillary</strong>, <strong className="text-green-600">Ultramist</strong>, and{' '}
+                      <strong className="text-green-600">Ancillary</strong>, <strong className="text-green-600">Ultramist</strong>, <strong className="text-green-600">Wound Surveillance Visits</strong>, and{' '}
                       <strong className="text-green-600">Surgical</strong> orders with minimal manual intervention.
                     </p>
                   </div>
