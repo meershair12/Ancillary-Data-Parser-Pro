@@ -37,16 +37,26 @@ function StatsCards({ summary, setActiveTab }) {
             icon: <Scissors size={18} sx={{ fontSize: 18 }} />,
             tab: "surgical",
             color: '#3b82f6', // Blue
+        },
+        {
+            title: 'Wound Surveillance',
+            value: summary?.woundSurveillanceCount || 0,
+            parsedValue: summary?.woundSurveillanceParsedCount || 0,
+            icon: <Scissors size={18} sx={{ fontSize: 18 }} />,
+            tab: "surveillance",
+            color: '#833bf6', // Blue
         }
     ];
+//  .filter(stat=>stat.parsedValue !=0)
 
+    const filtered = stats.filter(stat=>stat.parsedValue !=0)
     return (
-        <Grid container spacing={2} sx={{ mb: 1 }}>
-            {stats.map((stat, index) => {
+        <Grid container spacing={2}  sx={{ mb: 1 }}>
+            {filtered.filter(stat=>stat.parsedValue !=0).map((stat, index) => {
                 const progress = stat.value > 0 ? (stat.parsedValue / stat.value) * 100 : 0;
 
                 return (
-                    <Grid item size={{ xs: 12, sm: 6, lg: 3 }} key={index} >
+                    <Grid item size={{ xs: 12, sm: 6, lg: filtered.length == 5 ? 2.4: 3 }} key={index} >
                         <Card
                             elevation={0}
                             onClick={() => stat.value > 0 && setActiveTab(stat.tab)}
@@ -110,7 +120,7 @@ function StatsCards({ summary, setActiveTab }) {
                                     </Box>
                                 </Stack>
 
-                                <Box sx={{ mb: 2 }}>
+                                <Box sx={{ mb:  0}}>
                                     <Typography
                                         variant="h4"
                                         sx={{

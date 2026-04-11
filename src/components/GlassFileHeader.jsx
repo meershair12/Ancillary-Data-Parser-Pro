@@ -48,7 +48,7 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
         component={motion.div}
         whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
         sx={{
-          mb: 4,
+          mb: 2,
           p: 2.5,
           background: 'rgba(28, 28, 30, 0.7)', // Darker iOS-style glass
           backdropFilter: 'blur(20px) saturate(180%)',
