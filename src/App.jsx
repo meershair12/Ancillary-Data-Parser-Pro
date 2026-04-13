@@ -53,9 +53,9 @@ function App() {
             
             
           </Routes>
+      <UpdateNotification />
           </motion.div>
       </AnimatePresence>
-      <UpdateNotification />
  </Suspense>
        
     </div>

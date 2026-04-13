@@ -1242,7 +1242,7 @@ export default function AncillaryDataParser() {
       >
         <Container maxWidth="xl" sx={{ py: !data ? 6:2 }}>
 
-          {!data && <PremiumHeader />}
+          {true && <PremiumHeader />}
           {error && (
             <Alert
               severity="error"
@@ -2293,6 +2293,7 @@ export default function AncillaryDataParser() {
                 elevation={0}
                 sx={{
                  height: `calc(100vh - 390px)`,
+                //  height: `700px`,
                   borderRadius: 0,
                   background: "rgba(12, 14, 18, 0.6)",
                   backdropFilter: "blur(24px) saturate(150%)",
