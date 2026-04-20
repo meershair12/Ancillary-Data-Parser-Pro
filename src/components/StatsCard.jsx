@@ -4,6 +4,39 @@ import { Box, Typography, Card, CardContent, Grid, LinearProgress, Stack } from 
 import { Droplets, Scissors, Info } from 'lucide-react';
 import { Assessment, LocalHospital } from '@mui/icons-material';
 
+ export const statsConfig = [
+        {
+            title: 'Total Records',
+            icon: <Assessment sx={{ fontSize: 18 }} />,
+            tab: "ancillary",
+            color: '#10b981', // Emerald
+        },
+        {
+            title: 'Ancillary',
+            icon: <LocalHospital sx={{ fontSize: 18 }} />,
+            tab: "ancillary",
+            color: '#ef4444', // Rose
+        },
+        {
+            title: 'Ultramist',
+            icon: <Droplets size={18} sx={{ fontSize: 18 }} />,
+            tab: "ultramist",
+            color: '#f97316', // Orange
+        },
+        {
+            title: 'Surgical',
+            icon: <Scissors size={18} sx={{ fontSize: 18 }} />,
+            tab: "surgical",
+            color: '#3b82f6', // Blue
+        },
+        {
+            title: 'Wound Surveillance',
+            icon: <Scissors size={18} sx={{ fontSize: 18 }} />,
+            tab: "surveillance",
+            color: '#833bf6', // Blue
+        }
+    ];
+
 function StatsCards({ summary, setActiveTab }) {
     const stats = [
         {
@@ -71,12 +104,11 @@ function StatsCards({ summary, setActiveTab }) {
                                 // filter: stat.value > 0 ? 'none' : 'grayscale(1)',
 
                                 cursor: stat.value > 0 ? 'pointer' : 'not-allowed',
-                                '&:hover': {
-                                    borderColor: `rgba(255, 255, 255, 0.2)`,
-                                },
+
                                 position: 'relative',
                                 transition: 'all 0.2s ease',
                                 '&:hover': {
+                                    borderColor: `rgba(255, 255, 255, 0.2)`,
                                     border: `1px solid ${stat.value > 0 ? stat.color : 'none'}50`,
                                     backgroundColor: stat.value > 0 ? 'rgba(37, 38, 39, 0.6)' : 'none',
                                 }

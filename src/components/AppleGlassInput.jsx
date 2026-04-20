@@ -13,8 +13,7 @@ const AppleGlassInput = ({
   const isProcessing = stateProgress > 0 && stateProgress < 100;
 
   return (
-    <Grid item xs={12} md={4}>
-      <Box sx={{ position: 'relative', width: '100%' }}>
+    <Box sx={{ position: 'relative', width: '100%' }}>
         <TextField
           fullWidth
           value={inputValue}
@@ -125,7 +124,7 @@ const AppleGlassInput = ({
           )}
         </Button>
       </Box>
-    </Grid>
+    
   );
 };
 

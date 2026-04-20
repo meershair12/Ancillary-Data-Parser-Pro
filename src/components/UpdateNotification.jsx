@@ -1,26 +1,27 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const STORAGE_KEY = "mediextract_dismissed_v4.8.4";
+const STORAGE_KEY = "mediextract_dismissed_v4.8.5";
+const PREVIOUS_STORAGE_KEYS = ["mediextract_dismissed_v4.8.4"];
 
 const updates = [
   {
-    title: "Wound Surveillance Visit Parsing",
-    desc: "New extraction logic for surveillance orders including automated classification.",
-    tag: "Feature",
+    title: "Physician Assignment Fix",
+    desc: "Orders with physician not specified no longer inherit the wrong physician from nearby records.",
+    tag: "Fix",
     tagColor: "text-emerald-400 bg-emerald-400/10",
   },
   {
-    title: "Enhanced Dashboard UI",
-    desc: "Refined workspace layout with improved data density and navigation.",
-    tag: "UI/UX",
-    tagColor: "text-blue-400 bg-blue-400/10",
+    title: "Data Validation Alert",
+    desc: "Interactive validation modal now flags orders with missing required fields for manual review.",
+    tag: "Validation",
+    tagColor: "text-amber-300 bg-amber-400/10",
   },
   {
-    title: "Performance Optimizations",
-    desc: "Reduced parallel file processing latency by 24%.",
+    title: "Bug Fixes and Performance",
+    desc: "Parsing flow is more stable with cleaner data checks and improved runtime responsiveness.",
     tag: "System",
-    tagColor: "text-purple-400 bg-purple-400/10",
+    tagColor: "text-blue-400 bg-blue-400/10",
   },
 ];
 
@@ -28,6 +29,8 @@ export default function UpdateNotification() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    PREVIOUS_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+
     const dismissed = localStorage.getItem(STORAGE_KEY);
     if (!dismissed) {
       const timer = setTimeout(() => setVisible(true), 800);
@@ -65,7 +68,7 @@ export default function UpdateNotification() {
                     System Update
                   </h3>
                 </div>
-                <p className="text-xl font-semibold text-white">Version 4.8.4</p>
+                <p className="text-xl font-semibold text-white">Version 4.8.5</p>
               </div>
               <button
                 onClick={dismiss}
@@ -111,7 +114,7 @@ export default function UpdateNotification() {
             {/* Action Area */}
             <div className="mt-8 flex items-center justify-between">
               <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest">
-                Released 11.04.2026
+                Released Apr 18, 2026
               </p>
               <motion.button
                 whileHover={{ y: -1 }}

@@ -1,4 +1,11 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useDeferredValue,
+} from "react";
 import {
   ThemeProvider,
   createTheme,
@@ -21,8 +28,8 @@ import {
   InputAdornment,
   Autocomplete,
   CircularProgress,
+  ButtonGroup,
 } from "@mui/material";
-import * as XLSX from "xlsx";
 import {
   CheckCircleIcon,
   ClipboardList,
@@ -35,7 +42,7 @@ import {
   Trash2,
 } from "lucide-react";
 import ExcelLogo from "../assets/excel.png";
-import { DataGridPro } from "@mui/x-data-grid-pro";
+import { DataGrid, DataGridPro } from "@mui/x-data-grid-pro";
 import {
   CloudUpload,
   Description,
@@ -47,6 +54,8 @@ import {
   Refresh,
   CheckCircle,
   Close,
+  Search,
+  Clear,
 } from "@mui/icons-material";
 import ProfessionalFooter from "./Footer";
 import logo from "./logo.png";
@@ -57,13 +66,14 @@ import { ToastContainer, toast } from "react-toastify";
 import { TestSwitcher } from "./ButtonType";
 import PremiumHeader from "./Header";
 import FileUpload from "./FileUpload";
-import StatsCards from "./StatsCard";
+import StatsCards, {  statsConfig } from "./StatsCard";
 import { motion, useAnimation } from "framer-motion";
 import EnterpriseModal from "./StateConfigMode";
 import ReportPeriodCard from "./ReportPeriodCard";
 import AppleGlassInput from "./AppleGlassInput";
 import GlassFileHeader from "./GlassFileHeader";
 import { appConfig } from "./appConfig";
+import AnimatedTabs from "./AnimatedTabs";
 // Variants for the Parent Container
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -84,6 +94,15 @@ const itemVariants = {
     opacity: 1,
     transition: { type: "spring", stiffness: 300, damping: 24 },
   },
+};
+
+let xlsxModulePromise;
+
+const getXLSX = async () => {
+  if (!xlsxModulePromise) {
+    xlsxModulePromise = import("xlsx");
+  }
+  return xlsxModulePromise;
 };
 
 const columnsBase = [
@@ -386,8 +405,52 @@ export default function AncillaryDataParser() {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [sortModel, setSortModel] = useState([]);
   const [filterState, setFilterState] = useState("ALL"); // 'ALL' or specific state code like 'IL'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showMissingDataOnly, setShowMissingDataOnly] = useState(false);
+
+  const progressRafRef = useRef(null);
+  const progressMapRef = useRef(new Map());
+  const hasShownMissingPhysicianAlertRef = useRef(false);
 
   const controls = useAnimation();
+
+  const flushProgressUpdates = useCallback((totalFiles) => {
+    const progressEntries = Array.from(progressMapRef.current.entries());
+
+    if (progressEntries.length > 0) {
+      setUploadedFiles((prev) =>
+        prev.map((fileObj) => {
+          const match = progressEntries.find(([id]) => id === fileObj.id);
+          if (!match) return fileObj;
+          return { ...fileObj, progress: match[1] };
+        }),
+      );
+    }
+
+    if (totalFiles > 0) {
+      const totalProgress =
+        Array.from(progressMapRef.current.values()).reduce(
+          (sum, value) => sum + value,
+          0,
+        ) / totalFiles;
+      setProgress(Number(totalProgress.toFixed(2)));
+    }
+
+    progressRafRef.current = null;
+  }, []);
+
+  const scheduleProgressUpdate = useCallback(
+    (fileId, value, totalFiles) => {
+      progressMapRef.current.set(fileId, value);
+
+      if (progressRafRef.current) return;
+
+      progressRafRef.current = requestAnimationFrame(() => {
+        flushProgressUpdates(totalFiles);
+      });
+    },
+    [flushProgressUpdates],
+  );
 
   const normalizeClinicName = (value) =>
     String(value || "")
@@ -420,6 +483,14 @@ export default function AncillaryDataParser() {
     });
 
     document.title = `${appConfig.appName.first + appConfig.appName.second} ${appConfig.version} - Personic Health`;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (progressRafRef.current) {
+        cancelAnimationFrame(progressRafRef.current);
+      }
+    };
   }, []);
 
   // Handle delete rows
@@ -501,7 +572,71 @@ export default function AncillaryDataParser() {
   };
 
   // Filter data based on active tab and state filter
-  const getFilteredRows = useCallback(() => {
+  const requiredFieldConfig = useMemo(
+    () => [
+      { key: "patientName", label: "Patient Name" },
+      { key: "mrn", label: "MRN" },
+      { key: "category", label: "Category" },
+      { key: "testName", label: "Test Name" },
+      { key: "physician", label: "Ordering Physician" },
+      { key: "dateOrdered", label: "Date Ordered" },
+      { key: "state", label: "State" },
+      { key: "uid", label: "UID" },
+    ],
+    [],
+  );
+
+  const ordersWithMissingColumns = useMemo(() => {
+    if (!data) return [];
+
+    return [
+      ...(data.parsedGeneral || []).map((row) => ({ ...row, orderType: "Ancillary" })),
+      ...(data.parsedSurgical || []).map((row) => ({ ...row, orderType: "Surgical" })),
+      ...(data.parsedTherapies || []).map((row) => ({ ...row, orderType: "Ultramist" })),
+      ...(data.parsedWoundSurveilance || []).map((row) => ({ ...row, orderType: "Surveillance" })),
+    ]
+      .map((row) => {
+        const missingFields = requiredFieldConfig
+          .filter((field) => !String(row[field.key] || "").trim())
+          .map((field) => field.label);
+
+        return {
+          ...row,
+          missingFields,
+        };
+      })
+      .filter((row) => row.missingFields.length > 0);
+  }, [data, requiredFieldConfig]);
+
+  const missingPhysicianOrders = useMemo(
+    () =>
+      ordersWithMissingColumns.filter((row) =>
+        row.missingFields.includes("Ordering Physician"),
+      ),
+    [ordersWithMissingColumns],
+  );
+
+  const missingColumnSummary = useMemo(() => {
+    const summaryMap = new Map();
+
+    ordersWithMissingColumns.forEach((row) => {
+      row.missingFields.forEach((fieldLabel) => {
+        summaryMap.set(fieldLabel, (summaryMap.get(fieldLabel) || 0) + 1);
+      });
+    });
+
+    return Array.from(summaryMap.entries()).map(([label, count]) => ({
+      label,
+      count,
+    }));
+  }, [ordersWithMissingColumns]);
+
+  const missingDataIds = useMemo(
+    () => new Set(ordersWithMissingColumns.map((row) => row.id)),
+    [ordersWithMissingColumns],
+  );
+
+  const filteredRows = useMemo(() => {
     if (!data) return [];
 
     let rows = [];
@@ -526,10 +661,54 @@ export default function AncillaryDataParser() {
       rows = rows.filter((r) => r.state === filterState);
     }
 
-    return rows;
-  }, [data, activeTab, filterState]);
+    if (showMissingDataOnly) {
+      rows = rows.filter((r) => missingDataIds.has(r.id));
+    }
 
-  const currentData = getFilteredRows();
+    
+
+    return rows;
+  }, [
+    data,
+    activeTab,
+    filterState,
+    showMissingDataOnly,
+    missingDataIds,
+  ]);
+
+  useEffect(() => {
+    if (!data || ordersWithMissingColumns.length === 0) return;
+    if (hasShownMissingPhysicianAlertRef.current) return;
+
+    hasShownMissingPhysicianAlertRef.current = true;
+    // setShowMissingDataOnly(true);
+    setOpen(true);
+  }, [data, ordersWithMissingColumns]);
+
+  const deferredSearchQuery = useDeferredValue(
+    searchQuery.trim().toLowerCase(),
+  );
+
+  const currentData = useMemo(() => {
+    if (!deferredSearchQuery) return filteredRows;
+
+    return filteredRows.filter((row) => {
+      const searchableText = [
+        row.patientName,
+        row.mrn,
+        row.category,
+        row.testName,
+        row.physician,
+        row.state,
+        row.uid,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(deferredSearchQuery);
+    });
+  }, [filteredRows, deferredSearchQuery]);
 
   const handleSortModelChange = useCallback((model) => {
     setSortModel(model);
@@ -549,32 +728,42 @@ export default function AncillaryDataParser() {
     return base;
   }, [activeTab]);
 
+  const readSheetRows = async (file) => {
+    const XLSX = await getXLSX();
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: "array" });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    return { rows, firstSheetName };
+  };
+
   // Validation helper
+  const validateRows = (jsonData) => {
+    if (jsonData.length === 0) return { valid: false, error: "Empty file." };
+
+    const headers = jsonData[0];
+    const requiredColumns = ["Pending Orders"];
+    if (!requiredColumns.every((col) => headers.includes(col))) {
+      return {
+        valid: false,
+        error: "Invalid format. Missing 'Pending Orders'.",
+      };
+    }
+
+    const reportPeriodRaw = headers[4];
+    if (!reportPeriodRaw || !String(reportPeriodRaw).includes("-")) {
+      return { valid: false, error: "Invalid report period." };
+    }
+
+    return { valid: true, rows: jsonData };
+  };
+
   const validateFile = async (file) => {
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: "array" });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      if (jsonData.length === 0) return { valid: false, error: "Empty file." };
-
-      const headers = jsonData[0];
-      const requiredColumns = ["Pending Orders"];
-      if (!requiredColumns.every((col) => headers.includes(col))) {
-        return {
-          valid: false,
-          error: "Invalid format. Missing 'Pending Orders'.",
-        };
-      }
-
-      const reportPeriodRaw = headers[4];
-      if (!reportPeriodRaw || !String(reportPeriodRaw).includes("-")) {
-        return { valid: false, error: "Invalid report period." };
-      }
-
-      return { valid: true, rows: jsonData };
+      const { rows } = await readSheetRows(file);
+      return validateRows(rows);
     } catch (e) {
       return { valid: false, error: "Read error." };
     }
@@ -614,15 +803,11 @@ export default function AncillaryDataParser() {
           let error = null;
           let status = "pending";
           try {
-            const data = await entry.file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: "array" });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const { rows: jsonData } = await readSheetRows(entry.file);
 
             clinicName = jsonData?.[1]?.[0];
 
-            const validation = await validateFile(entry.file);
+            const validation = validateRows(jsonData);
             if (!validation.valid) {
               error = validation.error;
               status = "error";
@@ -729,11 +914,7 @@ export default function AncillaryDataParser() {
     setPreviewError(null);
 
     try {
-      const data = await fileObj.file.arrayBuffer();
-      const workbook = XLSX.read(data, { type: "array" });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      const { rows: jsonData, firstSheetName } = await readSheetRows(fileObj.file);
 
       if (!jsonData.length) {
         throw new Error("No data found in file");
@@ -834,6 +1015,10 @@ export default function AncillaryDataParser() {
     setLoading(true);
     setViewMode("config");
     setProgress(0);
+    progressMapRef.current = new Map();
+    hasShownMissingPhysicianAlertRef.current = false;
+    setOpen(false);
+    setShowMissingDataOnly(false);
 
     let mergedGeneral = [];
     let mergedTherapies = [];
@@ -851,7 +1036,6 @@ export default function AncillaryDataParser() {
     const totalFiles = processableFiles.length;
 
     const globalSeenUids = new Set(); // To track uniqueness across all files
-    const progressById = new Map();
 
     if (totalFiles === 0) {
       setLoading(false);
@@ -882,18 +1066,7 @@ export default function AncillaryDataParser() {
           // Helper to update progress per file
           const onProgress = (p) => {
             const value = Math.max(0, Math.min(100, Number(p.percentage)));
-            progressById.set(fileObj.id, value);
-
-            setUploadedFiles((prev) =>
-              prev.map((f) =>
-                f.id === fileObj.id ? { ...f, progress: value } : f,
-              ),
-            );
-
-            const totalProgress =
-              Array.from(progressById.values()).reduce((sum, v) => sum + v, 0) /
-              totalFiles;
-            setProgress(Number(totalProgress.toFixed(2)));
+            scheduleProgressUpdate(fileObj.id, value, totalFiles);
           };
 
           const reportPeriod = extractReportPeriod(validation.rows);
@@ -920,7 +1093,7 @@ export default function AncillaryDataParser() {
           const uniqueSurgical = filterUnique(result.parsedSurgical);
           const uniqueWoundSurveillance = filterUnique(result.parsedSurveillanceVisits);
 
-          progressById.set(fileObj.id, 100);
+          scheduleProgressUpdate(fileObj.id, 100, totalFiles);
           setUploadedFiles((prev) =>
             prev.map((f) =>
               f.id === fileObj.id
@@ -947,7 +1120,7 @@ export default function AncillaryDataParser() {
           };
         } catch (err) {
           console.error(err);
-          progressById.set(fileObj.id, 0);
+          scheduleProgressUpdate(fileObj.id, 0, totalFiles);
           setUploadedFiles((prev) =>
             prev.map((f) =>
               f.id === fileObj.id
@@ -994,6 +1167,13 @@ export default function AncillaryDataParser() {
 
     setProgress(100);
 
+    const mergedMissingPhysicianCount = [
+      ...mergedGeneral,
+      ...mergedTherapies,
+      ...mergedSurgical,
+      ...mergedWoundSurveilance,
+    ].filter((row) => !String(row.physician || "").trim()).length;
+
     // Set final data
     setData({
       parsedGeneral: mergedGeneral,
@@ -1007,6 +1187,7 @@ export default function AncillaryDataParser() {
         therapiesParsedCount: mergedTherapies.length,
         surgicalParsedCount: mergedSurgical.length,
         woundSurveillanceParsedCount: mergedWoundSurveilance.length,
+        missingPhysicianCount: mergedMissingPhysicianCount,
         totalCount:
           mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
         generalCount: mergedGeneral.length,
@@ -1037,6 +1218,10 @@ export default function AncillaryDataParser() {
     setPreviewLoadingId(null);
     setPreviewError(null);
     setInputValue("");
+    setSearchQuery("");
+    setOpen(false);
+    setShowMissingDataOnly(false);
+    hasShownMissingPhysicianAlertRef.current = false;
     setProcessStart(false);
     setActiveTab("ancillary");
     setFilterState("ALL");
@@ -1204,10 +1389,141 @@ export default function AncillaryDataParser() {
     [uploadedFiles],
   );
 
+
+  const activeMUIGridHeader = statsConfig.find(s => s.tab == activeTab)
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <ToastContainer />
+
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "92%", md: 760 },
+            maxHeight: "82vh",
+            overflow: "auto",
+            p: 3,
+            borderRadius: 4,
+            background: "rgb(8, 8, 8)",
+            border: "1px solid rgba(255, 255, 255, 0.16)",
+            boxShadow: "0 24px 70px rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(18px)",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>
+              Data Validation Alert
+            </Typography>
+            <IconButton onClick={() => setOpen(false)} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+
+          <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+            {ordersWithMissingColumns.length} orders have missing required data.
+            Please review before final export.
+          </Alert>
+
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+            <Chip
+              label={`Missing Data: ${ordersWithMissingColumns.length}`}
+              sx={{
+                background: "rgba(245, 158, 11, 0.16)",
+                border: "1px solid rgba(245, 158, 11, 0.45)",
+                color: "#fde68a",
+              }}
+            />
+            {/* <Chip
+              label={`Missing Physician: ${missingPhysicianOrders.length}`}
+              sx={{
+                background: "rgba(239, 68, 68, 0.16)",
+                border: "1px solid rgba(239, 68, 68, 0.45)",
+                color: "#fecaca",
+              }}
+            /> */}
+          {missingColumnSummary.map((item) => (
+              <Chip
+                key={item.label}
+                label={`${item.label}: ${item.count}`}
+                sx={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  color: "rgba(255,255,255,0.9)",
+                }}
+              />
+            ))}
+          </Box>
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "rgba(255,255,255,0.8)", mb: 1 }}
+          >
+            Sample Orders (first 8)
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              mb: 2,
+              maxHeight: 280,
+              overflowY: "auto",
+            }}
+          >
+            {ordersWithMissingColumns.slice(0, 8).map((row) => (
+              <Paper
+                key={`${row.id}-${row.uid}`}
+                sx={{
+                  p: 1.2,
+                  borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>
+                  {row.orderType} | {row.patientName || "Unknown Patient"} | {row.mrn || "No MRN"}
+                </Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
+                  Missing: {row.missingFields.join(", ")}
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setShowMissingDataOnly(true);
+                setOpen(false);
+              }}
+            >
+              Show Missing Data
+            </Button>
+           
+            <Button
+              variant="text"
+              onClick={() => {
+                setShowMissingDataOnly(false);
+                setOpen(false);
+              }}
+            >
+              Show All
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
 
       <Box
         sx={{
@@ -1221,7 +1537,9 @@ export default function AncillaryDataParser() {
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
-          backgroundColor: "#0a0a0a",
+          // backgroundImage:
+          //   "radial-gradient(circle at 15% 15%, rgba(16,185,129,0.2) 0%, transparent 42%), radial-gradient(circle at 85% 12%, rgba(59,130,246,0.18) 0%, transparent 40%), linear-gradient(140deg, #07090f 0%, #0b1118 42%, #080d14 100%)",
+          backgroundColor: "#060608",
           // backgroundImage: `
           //             radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%), 
           //             radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
@@ -2036,8 +2354,9 @@ export default function AncillaryDataParser() {
                                       previewCache[selectedPreviewId].columns
                                     }
                                     density="compact"
+                                    checkboxSelection
                                     disableRowSelectionOnClick
-                                    hideFooter
+                                    // hideFooter
                                     sx={{
                                       // height: '100%',
                                       background: "rgba(12, 14, 18, 0.66)",
@@ -2114,9 +2433,9 @@ export default function AncillaryDataParser() {
               </Grid>
 
               <Grid container spacing={3} sx={{ mb: 1 }}>
-                <Grid item size={{ xs: 12, md: 8 }} xs={12} md={8}>
+                <Grid item size={{ xs: 12, md: 9 }} xs={12} md={8}>
                   {/* Custom Tab Switcher */}
-                  <Paper
+                  {/* <Paper
                     sx={{
                       p: 0.5,
                       background: "rgba(20, 20, 22, 0)",
@@ -2131,27 +2450,28 @@ export default function AncillaryDataParser() {
                       const tabStyles = {
                         ancillary: {
                           bg: "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
+                          
                           border: "rgba(16, 185, 129, 0.7)",
                           shadow: "0 8px 20px rgba(16, 185, 129, 0.28)",
                           hover: "linear-gradient(135deg, #10b981 0%, #10b981 100%)",
                         },
                         surgical: {
-                          bg: "linear-gradient(135deg, #fb7185 0%, #ef4444 100%)",
-                          border: "rgba(239, 68, 68, 0.7)",
-                          shadow: "0 8px 20px rgba(239, 68, 68, 0.25)",
-                          hover: "linear-gradient(135deg, #ef4444 0%, #ef4444 100%)",
-                        },
-                        ultramist: {
-                          bg: "linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)",
+                          bg: "linear-gradient(135deg, #3885f8 0%, #0e66e9 100%)",
                           border: "rgba(14, 165, 233, 0.7)",
-                          shadow: "0 8px 20px rgba(14, 165, 233, 0.25)",
+                          shadow: "0 8px 20px rgba(68, 94, 239, 0.25)",
                           hover: "linear-gradient(135deg, #0ea5e9 0%, #0ea5e9 100%)",
                         },
+                        ultramist: {
+                          bg: "linear-gradient(135deg, #f8ab38 0%, #e9910e 100%)",
+                          border: "rgba(248, 171, 56, 0.7)",
+                          shadow: "0 8px 20px rgba(248, 171, 56, 0.25)",
+                          hover: "linear-gradient(135deg, #f8ab38 0%, #e9910e 100%)",
+                        },
                         surveillance: {
-                          bg: "linear-gradient(135deg, #7b38f8 0%, #5b0ee9 100%)",
-                          border: "rgba(116, 14, 233, 0.7)",
-                          shadow: "0 8px 20px rgba(14, 165, 233, 0.25)",
-                          hover: "linear-gradient(135deg, #7f0ee9 0%, #860ee9 100%)",
+                          bg: "linear-gradient(135deg, #be24fb 0%, #700bf5 100%)",
+                          border: "rgba(132, 11, 245, 0.7)",
+                          shadow: "0 8px 20px rgba(54, 11, 245, 0.25)",
+                          hover: "linear-gradient(135deg, #9f0bf5 0%, #7306d9 100%)",
                         },
                       };
                       return [
@@ -2161,14 +2481,14 @@ export default function AncillaryDataParser() {
                           value: tabCounts.ancillary
                         },
                         {
-                          id: "surgical",
-                          label: `Surgical (${tabCounts.surgical.toLocaleString()})`,
-                          value: tabCounts.surgical
-                        },
-                        {
                           id: "ultramist",
                           label: `Ultramist (${tabCounts.ultramist.toLocaleString()})`,
                           value: tabCounts.ultramist
+                        },
+                        {
+                          id: "surgical",
+                          label: `Surgical (${tabCounts.surgical.toLocaleString()})`,
+                          value: tabCounts.surgical
                         },
                         {
                           id: "surveillance",
@@ -2191,17 +2511,17 @@ export default function AncillaryDataParser() {
                               fontWeight: 700,
                               letterSpacing: "0.02em",
                               textTransform: "none",
-                              color: isActive
+                              color: isActive && !showMissingDataOnly
                                 ? "#0a0a0a"
                                 : "rgba(255,255,255,0.7)",
-                              background: isActive ? style.bg : "transparent",
-                              border: isActive
+                              background: isActive && !showMissingDataOnly ? style.bg : "transparent",
+                              border: isActive && !showMissingDataOnly
                                 ? `1px solid ${style.border}`
                                 : "1px solid transparent",
-                              boxShadow: isActive ? style.shadow : "none",
+                              boxShadow: isActive && !showMissingDataOnly ? style.shadow : "none",
                               transition: "all 0.2s ease",
                               "&:hover": {
-                                background: isActive
+                                background: isActive && !showMissingDataOnly
                                   ? style.hover
                                   : "rgba(255,255,255,0.08)",
                               },
@@ -2212,10 +2532,16 @@ export default function AncillaryDataParser() {
                         );
                       });
                     })()}
-                  </Paper>
+                  </Paper> */}
+                <AnimatedTabs
+  tabCounts={tabCounts}
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  
+/>
                 </Grid>
 
-                <Grid item size={{ xs: 12, md: 4 }} xs={12} md={4}>
+                <Grid item size={{ xs: 12, md: 3 }}>
                   {/* Input for State Update (existing functionality) */}
                   <AppleGlassInput
                     handleInputChange={handleInputChange}
@@ -2231,70 +2557,152 @@ export default function AncillaryDataParser() {
               <Box
                 sx={{
                   display: "flex",
-                  gap: 0,
-                  mb: 0,
+                  gap: 1,
+                  mb: 1,
                   flexWrap: "wrap",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
-                {[
-                  { key: "ALL", label: "All States" },
-                  ...availableStates.map((state) => ({
-                    key: state,
-                    label: state,
-                  })),
-                ].map((item) => {
-                  const isActive = filterState === item.key;
-                  return (
-                    <Button
-                      key={item.key}
-                      onClick={() => setFilterState(item.key)}
-                      sx={{
-                        borderRadius: "0",
-                        px: 2,
-                        py: 0.6,
-                        fontSize: "0.78rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.02em",
-                        textTransform: "none",
-                        display: "flex",
+                <TextField
+                  size="small"
+                  placeholder="Search name, MRN, physician, test, UID..."
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  sx={{
+                    width: { xs: "100%", md: 420 },
+                    "& .MuiInputBase-root": {
+                      borderRadius: 999,
+                      background: "rgba(0, 0, 0, 0.7)",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ color: "rgba(229,231,235,0.7)" }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchQuery ? (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          <Clear fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
+                  }}
+                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ButtonGroup>
+                    {[
+                      { key: "ALL", label: "All States" },
+                      ...availableStates.map((state) => ({
+                        key: state,
+                        label: state,
+                      })),
+                    ].map((item) => {
+                      const isActive = filterState === item.key;
+                      return (
+                        <Button
+                          key={item.key}
+                          onClick={() => setFilterState(item.key)}
+                          sx={{
+                            px: 2,
+                            py: 0.6,
+                            fontSize: "0.78rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.02em",
+                            textTransform: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minHeight: 32,
+                            color: isActive
+                              ? "#0a0a0a"
+                              : "rgba(255,255,255,0.75)",
+                            background: isActive
+                              ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
+                              : "rgba(13, 22, 39, 0.45)",
+                            border: isActive
+                              ? "1px solid rgba(16, 185, 129, 0.65)"
+                              : "1px solid rgba(255,255,255,0.08)",
+                            boxShadow: isActive
+                              ? "0 6px 18px rgba(16, 185, 129, 0.25)"
+                              : "none",
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              background: isActive
+                                ? "linear-gradient(135deg, #10b981 0%, #10b981 100%)"
+                                : "rgba(255,255,255,0.12)",
+                              borderColor: isActive
+                                ? "rgba(16, 185, 129, 0.8)"
+                                : "rgba(255,255,255,0.18)",
+                            },
+                          }}
+                        >
+                          {item.label}
+                        </Button>
+                      );
+                    })}
+                  </ButtonGroup>
 
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minHeight: 32,
-                        color: isActive ? "#0a0a0a" : "rgba(255,255,255,0.75)",
-                        background: isActive
-                          ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
-                          : "rgba(13, 22, 39, 0.45)",
-                        border: isActive
-                          ? "1px solid rgba(16, 185, 129, 0.65)"
-                          : "1px solid rgba(255,255,255,0.08)",
-                        boxShadow: isActive
-                          ? "0 6px 18px rgba(16, 185, 129, 0.25)"
-                          : "none",
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                          background: isActive
-                            ? "linear-gradient(135deg, #10b981 0%, #10b981 100%)"
-                            : "rgba(255,255,255,0.12)",
-                          borderColor: isActive
-                            ? "rgba(16, 185, 129, 0.8)"
-                            : "rgba(255,255,255,0.18)",
-                        },
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                  );
-                })}
+                 {ordersWithMissingColumns.length > 0 && (<Button
+                    onClick={() => {
+                      
+                      setShowMissingDataOnly((current) => {
+                        const next = !current;
+                        return next;
+                      });
+                    }}
+                    sx={{
+                      borderRadius: 999,
+                      px: 2,
+                      py: 0.6,
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textTransform: "none",
+                      minHeight: 32,
+                      color: showMissingDataOnly
+                        ? "#0a0a0a"
+                        : "rgba(255,255,255,0.8)",
+                      background: showMissingDataOnly
+                        ? "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)"
+                        : "rgba(13, 22, 39, 0.45)",
+                      border: showMissingDataOnly
+                        ? "1px solid rgba(245, 158, 11, 0.8)"
+                        : "1px solid rgba(255,255,255,0.12)",
+                      boxShadow: showMissingDataOnly
+                        ? "0 6px 18px rgba(245, 158, 11, 0.26)"
+                        : "none",
+                      "&:hover": {
+                        background: showMissingDataOnly
+                          ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                          : "rgba(255,255,255,0.12)",
+                      },
+                    }}
+                  >
+                    Missing Data ({ordersWithMissingColumns.length})
+                  </Button>)}
+
+                 
+                </Box>
               </Box>
-
               <Paper
                 elevation={0}
                 sx={{
                  height: `calc(100vh - 390px)`,
                 //  height: `700px`,
-                  borderRadius: 0,
+                  borderRadius: 5,
                   background: "rgba(12, 14, 18, 0.6)",
                   backdropFilter: "blur(24px) saturate(150%)",
                   border: "1px solid rgba(255, 255, 255, 0.16)",
@@ -2303,25 +2711,28 @@ export default function AncillaryDataParser() {
 
                 }}
               >
-
+                
                 <DataGridPro
                   rows={currentData}
                   columns={columns}
                   checkboxSelection
+                  disableRowSelectionOnClick
                   density="compact"
                   label={
-                    <>
-                      {tabConfig[activeTab].label} MediExtract - Personic health
-                    </>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: showMissingDataOnly ? "rgb(253, 198, 15)" : activeMUIGridHeader.color || "rgba(255,255,255,0.7)" }}>
+                       {showMissingDataOnly ? "Missing Data - " : <>{activeMUIGridHeader.icon}{tabConfig[activeTab].label}</>} MediExtract - Personic health
+                    </div>
                   }
                   initialState={{
                     pinnedColumns: { left: ["__check__", "patientName"] },
                   }}
                   showToolbar
+                  rowBufferPx={480}
+                  columnBufferPx={180}
                   slotProps={{
                     toolbar: {
                       csvOptions: {
-                        fileName: `${tabConfig[activeTab]?.label?.split(" ")?.join("_")}_${filterState == "ALL" ? availableStates?.join("_") : filterState}_${getESTDateAndPeriodLabel().estDate}`,
+                        fileName:showMissingDataOnly ? `Missing_Data_${tabConfig[activeTab]?.label?.split(" ")?.join("_")}_${filterState == "ALL" ? availableStates?.join("_") : filterState}_${getESTDateAndPeriodLabel().estDate}` :   `${tabConfig[activeTab]?.label?.split(" ")?.join("_")}_${filterState == "ALL" ? availableStates?.join("_") : filterState}_${getESTDateAndPeriodLabel().estDate}`,
                       },
 
 
