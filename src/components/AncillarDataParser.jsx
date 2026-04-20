@@ -74,6 +74,8 @@ import AppleGlassInput from "./AppleGlassInput";
 import GlassFileHeader from "./GlassFileHeader";
 import { appConfig } from "./appConfig";
 import AnimatedTabs from "./AnimatedTabs";
+
+
 // Variants for the Parent Container
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -914,8 +916,10 @@ export default function AncillaryDataParser() {
     setPreviewError(null);
 
     try {
+      // const { rows: jsonData, firstSheetName } = await readSheetRows(fileObj.file);
       const { rows: jsonData, firstSheetName } = await readSheetRows(fileObj.file);
 
+      
       if (!jsonData.length) {
         throw new Error("No data found in file");
       }

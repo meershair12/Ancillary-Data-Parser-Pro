@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const STORAGE_KEY = "mediextract_dismissed_v4.8.5";
+const STORAGE_KEY = "mediextract_dismissed_v4.8.6";
 const PREVIOUS_STORAGE_KEYS = ["mediextract_dismissed_v4.8.4"];
 
 const updates = [
@@ -68,7 +68,7 @@ export default function UpdateNotification() {
                     System Update
                   </h3>
                 </div>
-                <p className="text-xl font-semibold text-white">Version 4.8.5</p>
+                <p className="text-xl font-semibold text-white">Version 4.8.6</p>
               </div>
               <button
                 onClick={dismiss}
@@ -114,7 +114,7 @@ export default function UpdateNotification() {
             {/* Action Area */}
             <div className="mt-8 flex items-center justify-between">
               <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest">
-                Released Apr 18, 2026
+                Released Apr 20, 2026
               </p>
               <motion.button
                 whileHover={{ y: -1 }}
