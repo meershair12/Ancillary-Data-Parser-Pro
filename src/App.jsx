@@ -18,9 +18,8 @@ const containerVariants = {
   }
 };
 import IOSLoader from './components/WebLoader'
-import { appConfig } from './components/appConfig';
+import { appConfig, initThemeSync } from './components/appConfig';
 // import MedExtractDocumentation from './components/Documentation';
-import { ThemeProvider } from '@mui/material';
 import { Route, Routes } from 'react-router'
 import UpdateNotification from './components/UpdateNotification'
 
@@ -28,8 +27,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    
     document.title = `${appConfig.appName.first+appConfig.appName.second} ${appConfig.version} - Personic Health`;
+    const cleanupThemeSync = initThemeSync();
+
+    return () => {
+      cleanupThemeSync();
+    };
   }, []);
 
   return (

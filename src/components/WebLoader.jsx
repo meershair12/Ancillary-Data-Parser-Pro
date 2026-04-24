@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import Logo from './logo.png';
-import { appConfig } from './appConfig';
+import {
+  appConfig,
+  THEME_MODES,
+  getResolvedThemeMode,
+  subscribeToThemeChanges,
+} from './appConfig';
+
 const PremiumPatientLoader = () => {
-  const bars = Array.from({ length: 12 });
+  const [resolvedThemeMode, setResolvedThemeMode] = useState(getResolvedThemeMode());
+  const isLightMode = resolvedThemeMode === THEME_MODES.LIGHT;
+  const styles = useMemo(() => getStyles(isLightMode), [isLightMode]);
+
+  useEffect(() => {
+    const unsubscribeTheme = subscribeToThemeChanges((nextResolvedMode) => {
+      setResolvedThemeMode(nextResolvedMode);
+    });
+
+    return () => {
+      unsubscribeTheme();
+    };
+  }, []);
   
   // Gradient background animation
   const backgroundVariants = {
@@ -17,44 +34,6 @@ const PremiumPatientLoader = () => {
     },
   };
 
-  // Pulse effect for the spinner
-  const pulseVariants = {
-    animate: {
-      boxShadow: [
-        '0 0 0 0 rgba(116, 184, 123, 0.7)',
-        '0 0 0 20px rgba(116, 184, 123, 0)',
-      ],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: 'easeOut',
-      },
-    },
-  };
-
-  // Individual bar animation with enhanced timing
-  const barVariants = (i) => ({
-    animate: {
-      opacity: [0.1, 1, 0.1],
-      scale: [0.8, 1, 0.8],
-    },
-    transition: {
-      repeat: Infinity,
-      duration: 1.2,
-      delay: i * 0.1,
-      ease: 'easeInOut',
-    },
-  });
-
-  // Logo SVG component
-  const Logo = () => (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="22" stroke="#74B87B" strokeWidth="2"/>
-      <path d="M20 24L22.5 26.5L28 20.5" stroke="#74B87B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <circle cx="24" cy="24" r="16" fill="none" stroke="#74B87B" strokeWidth="1" opacity="0.3"/>
-    </svg>
-  );
-  
   return (
     <motion.div 
       style={styles.container}
@@ -73,7 +52,7 @@ const PremiumPatientLoader = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          {/* <Logo /> */}
+          <img src="favicon.png" alt="Logo" style={styles.logoImage} />
         </motion.div>
 
         {/* Animated spinner container with pulse */}
@@ -137,7 +116,10 @@ const PremiumPatientLoader = () => {
               transition={{  duration: 0.6 }}
             />
           </div>
-          <p style={styles.product} className='flex items-center justify-center gap-2 font-bold'>{appConfig.appName.first+appConfig.appName.second} <small className='bg-green-900/50 px-2 border border-green-700 rounded-full text-sm text-green-400 font-medium'>{appConfig.version}</small></p>
+          <p style={styles.product} className='flex items-center justify-center gap-2 font-bold'>
+            {appConfig.appName.first + appConfig.appName.second}
+            <small style={styles.versionBadge}>{appConfig.version}</small>
+          </p>
           <p style={styles.subtitle}>Advanced Medical Data Processing</p>
         </motion.div>
 
@@ -155,10 +137,12 @@ const PremiumPatientLoader = () => {
   );
 };
 
-const styles = {
+const getStyles = (isLightMode) => ({
   container: {
     height: '100vh',
-    background: 'linear-gradient(-45deg, #0a0a0a, #1a1a1a, #0d0d0d, #0a0a0a)',
+    background: isLightMode
+      ? 'linear-gradient(-45deg, #eef5ef, #e7f3e9, #f7fbf8, #edf6ee)'
+      : 'linear-gradient(-45deg, #0a0a0a, #1a1a1a, #0d0d0d, #0a0a0a)',
     backgroundSize: '400% 400%',
     display: 'flex',
     justifyContent: 'center',
@@ -171,7 +155,9 @@ const styles = {
     position: 'absolute',
     width: '500px',
     height: '500px',
-    background: 'radial-gradient(circle, rgba(116, 184, 123, 0.08) 0%, transparent 70%)',
+    background: isLightMode
+      ? 'radial-gradient(circle, rgba(229, 247, 230, 0.18) 0%, transparent 70%)'
+      : 'radial-gradient(circle, rgba(116, 184, 123, 0.08) 0%, transparent 70%)',
     borderRadius: '50%',
     top: '50%',
     left: '50%',
@@ -182,13 +168,15 @@ const styles = {
     textAlign: 'center',
     zIndex: 10,
     position: 'relative',
+    width: 'min(90vw, 460px)',
   },
   logoContainer: {
     marginBottom: '20px',
   },
-  spinnerContainer: {
-    display: 'inline-block',
-    position: 'relative',
+  logoImage: {
+    width: '48px',
+    height: '48px',
+    margin: '0 auto',
   },
   spinner: {
     position: 'relative',
@@ -197,22 +185,11 @@ const styles = {
     margin: '0 auto 30px auto',
     borderRadius: '50%',
   },
-  bar: {
-    position: 'absolute',
-    width: '4px',
-    height: '12px',
-    backgroundColor: '#74B87B',
-    borderRadius: '3px',
-    left: '23px',
-    top: '19px',
-    transformOrigin: 'center 25px',
-    boxShadow: '0 0 8px rgba(116, 184, 123, 0.6)',
-  },
   percentageContainer: {
     marginBottom: '20px',
   },
   percentage: {
-    color: '#74B87B',
+    color: appConfig.color.primary,
     fontSize: '13px',
     fontWeight: '500',
     letterSpacing: '1px',
@@ -226,27 +203,39 @@ const styles = {
     alignItems: 'center',
   },
   brand: {
-    color: '#74B87B',
+    color: appConfig.color.primary,
     fontSize: '14px',
     letterSpacing: '3px',
     fontWeight: '700',
     margin: 0,
-    textShadow: '0 0 10px rgba(116, 184, 123, 0.3)',
+    textShadow: isLightMode
+      ? '0 0 8px rgba(116, 184, 123, 0.18)'
+      : '0 0 10px rgba(116, 184, 123, 0.3)',
   },
   underline: {
     height: '2px',
-    background: 'linear-gradient(90deg, transparent, #74B87B, transparent)',
+    background: `linear-gradient(90deg, transparent, ${appConfig.color.primary}, transparent)`,
     marginTop: '8px',
   },
   product: {
-    color: '#ffffffe7',
+    color: isLightMode ? '#1f2937' : '#ffffffe7',
     fontSize: '20px',
     fontWeight: '700',
     marginTop: '12px',
     letterSpacing: '0.5px',
   },
+  versionBadge: {
+    background: isLightMode ? 'rgba(116, 184, 123, 0.16)' : 'rgba(20, 83, 45, 0.5)',
+    border: `1px solid ${isLightMode ? 'rgba(22, 101, 52, 0.35)' : 'rgba(21, 128, 61, 0.8)'}`,
+    borderRadius: '999px',
+    color: isLightMode ? '#166534' : '#4ade80',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    lineHeight: 1,
+    padding: '4px 8px',
+  },
   subtitle: {
-    color: '#888888',
+    color: isLightMode ? '#4b5563' : '#888888',
     fontSize: '12px',
     fontWeight: '400',
     marginTop: '8px',
@@ -263,15 +252,17 @@ const styles = {
     width: '8px',
     height: '8px',
     borderRadius: '50%',
-    background: '#74B87B',
-    boxShadow: '0 0 8px rgba(116, 184, 123, 0.8)',
+    background: appConfig.color.primary,
+    boxShadow: isLightMode
+      ? '0 0 8px rgba(116, 184, 123, 0.5)'
+      : '0 0 8px rgba(116, 184, 123, 0.8)',
   },
   statusText: {
-    color: '#888888',
+    color: isLightMode ? '#4b5563' : '#888888',
     fontSize: '11px',
     fontWeight: '500',
     letterSpacing: '1px',
   },
-};
+});
 
 export default PremiumPatientLoader;

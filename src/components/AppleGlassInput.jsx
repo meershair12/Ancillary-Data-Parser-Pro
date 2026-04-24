@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Box, TextField, Button, InputAdornment, Stack } from '@mui/material';
+import { Box, TextField, Button, InputAdornment, Stack, useTheme } from '@mui/material';
 import { MapPin, Check } from 'lucide-react';
 
 const AppleGlassInput = ({ 
@@ -9,6 +9,8 @@ const AppleGlassInput = ({
   isButtonDisabled, 
   stateProgress 
 }) => {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === 'light';
   const isDone = stateProgress >= 100;
   const isProcessing = stateProgress > 0 && stateProgress < 100;
 
@@ -26,7 +28,11 @@ const AppleGlassInput = ({
                 <MapPin 
                   size={16} 
                   style={{ 
-                    color: isDone ? '#10b981' : 'rgba(255, 255, 255, 0.4)',
+                    color: isDone
+                      ? '#10b981'
+                      : isLightMode
+                        ? 'rgba(15, 23, 42, 0.45)'
+                        : 'rgba(255, 255, 255, 0.4)',
                     marginLeft: '8px',
                     transition: 'all 0.3s ease'
                   }} 
@@ -38,29 +44,43 @@ const AppleGlassInput = ({
               borderRadius: '14px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#fff',
-              background: 'rgba(0, 0, 0, 0.2)', // Deep glass indent
+              color: isLightMode ? '#0f172a' : '#fff',
+              background: isLightMode
+                ? 'rgba(255, 255, 255, 0.88)'
+                : 'rgba(0, 0, 0, 0.2)', // Deep glass indent
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)', // Subtle inner depth
+              border: isLightMode
+                ? '1px solid rgba(15, 23, 42, 0.14)'
+                : '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: isLightMode
+                ? 'inset 0 2px 4px rgba(15,23,42,0.08)'
+                : 'inset 0 2px 4px rgba(0,0,0,0.2)', // Subtle inner depth
               transition: 'all 0.2s ease-in-out',
               paddingRight: '110px', // Space for the floating button
 
               '&:hover': {
-                background: 'rgba(0, 0, 0, 0.3)',
-                borderColor: 'rgba(255, 255, 255, 0.15)',
+                background: isLightMode
+                  ? 'rgba(255, 255, 255, 0.96)'
+                  : 'rgba(0, 0, 0, 0.3)',
+                borderColor: isLightMode
+                  ? 'rgba(15, 23, 42, 0.24)'
+                  : 'rgba(255, 255, 255, 0.15)',
               },
               '&.Mui-focused': {
-                background: 'rgba(0, 0, 0, 0.4)',
+                background: isLightMode
+                  ? 'rgba(255, 255, 255, 1)'
+                  : 'rgba(0, 0, 0, 0.4)',
                 borderColor: 'rgba(59, 246, 118, 0.5)',
-                boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0,0,0,0.2)',
+                boxShadow: isLightMode
+                  ? '0 0 0 4px rgba(59, 130, 246, 0.18), inset 0 2px 4px rgba(15,23,42,0.06)'
+                  : '0 0 0 4px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0,0,0,0.2)',
               }
             }
           }}
           // Hide standard labels for the clean Apple look
           sx={{
             '& .MuiInputBase-input::placeholder': {
-              color: 'rgba(255, 255, 255, 0.3)',
+              color: isLightMode ? 'rgba(15, 23, 42, 0.42)' : 'rgba(255, 255, 255, 0.3)',
               opacity: 1,
             }
           }}
@@ -90,25 +110,43 @@ const AppleGlassInput = ({
               ? 'rgba(16, 185, 129, 0.2)'
               : isProcessing
                 ? 'rgba(59, 246, 165, 0.2)'
-                : '#fff', // White button is very "Apple"
+                : isLightMode
+                  ? '#0f172a'
+                  : '#fff', // White button is very "Apple"
             
-            color: isDone ? '#10b981' : isProcessing ? '#3bf67dff' : '#000',
+            color: isDone
+              ? '#10b981'
+              : isProcessing
+                ? '#3bf67dff'
+                : isLightMode
+                  ? '#ffffff'
+                  : '#000',
             border: isDone 
               ? '1px solid rgba(16, 185, 129, 0.5)' 
               : isProcessing 
                 ? '1px solid rgba(59, 246, 168, 0.5)' 
-                : 'none',
+                : isLightMode
+                  ? '1px solid rgba(15, 23, 42, 0.2)'
+                  : 'none',
 
             '&:hover': {
-              background: isDone ? 'rgba(16, 185, 129, 0.3)' : '#f4f4f5',
+              background: isDone
+                ? 'rgba(16, 185, 129, 0.3)'
+                : isLightMode
+                  ? '#1e293b'
+                  : '#f4f4f5',
               transform: 'translateY(-50%) scale(1.02)',
             },
             '&:active': {
               transform: 'translateY(-50%) scale(0.96)',
             },
             '&:disabled': {
-              background: 'rgba(255, 255, 255, 0.05)',
-              color: 'rgba(255, 255, 255, 0.2)',
+              background: isLightMode
+                ? 'rgba(15, 23, 42, 0.08)'
+                : 'rgba(255, 255, 255, 0.05)',
+              color: isLightMode
+                ? 'rgba(15, 23, 42, 0.35)'
+                : 'rgba(255, 255, 255, 0.2)',
             }
           }}
         >

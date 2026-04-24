@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Grid, LinearProgress, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Grid, LinearProgress, Stack, useTheme } from '@mui/material';
 
 import { Droplets, Scissors, Info } from 'lucide-react';
 import { Assessment, LocalHospital } from '@mui/icons-material';
@@ -38,6 +38,9 @@ import { Assessment, LocalHospital } from '@mui/icons-material';
     ];
 
 function StatsCards({ summary, setActiveTab }) {
+    const theme = useTheme();
+    const isLightMode = theme.palette.mode === 'light';
+
     const stats = [
         {
             title: 'Total Records',
@@ -95,10 +98,14 @@ function StatsCards({ summary, setActiveTab }) {
                             onClick={() => stat.value > 0 && setActiveTab(stat.tab)}
                             sx={{
                                 // background: 'rgba(61, 61, 61, 0.36)',
-                                background: 'rgba(28, 28, 30, 0.6)', // iPhone Dark Mode background
+                                background: isLightMode
+                                    ? 'rgba(255, 255, 255, 0.82)'
+                                    : 'rgba(28, 28, 30, 0.6)',
                                 backdropFilter: 'blur(30px) saturate(190%)',
                                 WebkitBackdropFilter: 'blur(30px) saturate(190%)',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                border: isLightMode
+                                    ? '1px solid rgba(15, 23, 42, 0.12)'
+                                    : '1px solid rgba(255, 255, 255, 0.08)',
                                 borderRadius: '18px',
                                 opacity: stat.value > 0 ? 1 : 0.5,
                                 // filter: stat.value > 0 ? 'none' : 'grayscale(1)',
@@ -108,9 +115,13 @@ function StatsCards({ summary, setActiveTab }) {
                                 position: 'relative',
                                 transition: 'all 0.2s ease',
                                 '&:hover': {
-                                    borderColor: `rgba(255, 255, 255, 0.2)`,
+                                    borderColor: isLightMode
+                                        ? 'rgba(59, 130, 246, 0.28)'
+                                        : `rgba(255, 255, 255, 0.2)`,
                                     border: `1px solid ${stat.value > 0 ? stat.color : 'none'}50`,
-                                    backgroundColor: stat.value > 0 ? 'rgba(37, 38, 39, 0.6)' : 'none',
+                                    backgroundColor: stat.value > 0
+                                        ? (isLightMode ? 'rgba(248, 250, 252, 0.96)' : 'rgba(37, 38, 39, 0.6)')
+                                        : 'none',
                                 }
                             }}
                         >
@@ -120,7 +131,9 @@ function StatsCards({ summary, setActiveTab }) {
                                 left: '10%',
                                 right: '10%',
                                 height: '1px',
-                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                                background: isLightMode
+                                    ? 'linear-gradient(90deg, rgba(255,255,255,0), rgba(15,23,42,0.14), rgba(255,255,255,0))'
+                                    : 'linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.15), rgba(255,255,255,0))',
                             }} />
 
                             {/* Accent Glow Strip */}
@@ -138,7 +151,7 @@ function StatsCards({ summary, setActiveTab }) {
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                                     <Typography
                                         sx={{
-                                            color: '#9ca3af',
+                                            color: isLightMode ? '#64748b' : '#9ca3af',
                                             fontWeight: 700,
                                             fontSize: '0.70rem',
                                             letterSpacing: '0.1em',
@@ -160,7 +173,7 @@ function StatsCards({ summary, setActiveTab }) {
                                             fontSize: "1.5rem",
 
                                             // fontFamily: '"Roboto Mono", monospace', // Technical feel
-                                            color: '#f3f4f6',
+                                            color: isLightMode ? '#0f172a' : '#f3f4f6',
                                             // letterSpacing: '-1px'
                                         }}
                                     >
@@ -171,10 +184,10 @@ function StatsCards({ summary, setActiveTab }) {
                                 {/* Enterprise Progress Metrics */}
                                 <Stack spacing={1}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                        <Typography sx={{ color: '#6b7280', fontSize: '0.7rem' }}>
-                                            Efficiency: <span style={{ color: '#d1d5db' }}>{progress.toFixed(1)}%</span>
+                                        <Typography sx={{ color: isLightMode ? '#64748b' : '#6b7280', fontSize: '0.7rem' }}>
+                                            Efficiency: <span style={{ color: isLightMode ? '#334155' : '#d1d5db' }}>{progress.toFixed(1)}%</span>
                                         </Typography>
-                                        <Typography sx={{ color: '#9ca3af', fontSize: '0.7rem', fontWeight: 600 }}>
+                                        <Typography sx={{ color: isLightMode ? '#64748b' : '#9ca3af', fontSize: '0.7rem', fontWeight: 600 }}>
                                             {Number(stat.parsedValue).toLocaleString("en-US")} / {Number(stat.value).toLocaleString("en-US")}
                                         </Typography>
                                     </Box>
@@ -185,7 +198,7 @@ function StatsCards({ summary, setActiveTab }) {
                                         sx={{
                                             height: 4,
                                             borderRadius: 2,
-                                            bgcolor: 'rgba(255,255,255,0.05)',
+                                            bgcolor: isLightMode ? 'rgba(15,23,42,0.12)' : 'rgba(255,255,255,0.05)',
                                             '& .MuiLinearProgress-bar': {
                                                 bgcolor: stat.color,
                                                 borderRadius: 2,

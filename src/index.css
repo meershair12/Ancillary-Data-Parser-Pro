@@ -33,6 +33,21 @@ body {
   color: #e5e7eb;
 }
 
+body.light {
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.84);
+  --glass-border: rgba(17, 24, 39, 0.16);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 26px 70px rgba(15, 23, 42, 0.14);
+  --accent: #2f6bff;
+  --accent-strong: #1f54e5;
+  background: radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.18), transparent 35%),
+    radial-gradient(circle at 88% 10%, rgba(16, 185, 129, 0.14), transparent 40%),
+    radial-gradient(circle at 45% 90%, rgba(56, 189, 248, 0.14), transparent 45%),
+    linear-gradient(170deg, #f8fbff 0%, #f1f6fd 40%, #edf3fb 100%);
+  color: #0f172a;
+}
+
 body::before,
 body::after {
   content: "";
@@ -54,6 +69,16 @@ body::after {
   inset: auto -10% -20% -10%;
   background: radial-gradient(circle at bottom, rgba(22, 163, 255, 0.12), transparent 70%);
   animation: glassFloat 20s ease-in-out infinite reverse;
+}
+
+body.light::before {
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 70%);
+  opacity: 0.5;
+}
+
+body.light::after {
+  background: radial-gradient(circle at bottom, rgba(16, 185, 129, 0.15), transparent 70%);
+  opacity: 0.45;
 }
 
 .glass-surface {
@@ -93,3 +118,9 @@ body::after {
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
       border-radius: 16px !important;
     }
+
+body.light .MuiDataGrid-paper {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12) !important;
+}

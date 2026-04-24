@@ -1,19 +1,16 @@
 import React from 'react';
-import { Box, Typography, Chip, Divider, IconButton, Tooltip, FormControlLabel } from '@mui/material';
+import { Box, Typography, Chip, Divider, useTheme } from '@mui/material';
 import {
-    Terminal,
-    ShieldCheck,
-    Database,
-    Settings,
-    Activity,
     Cpu,
     ArrowDownRight
 } from 'lucide-react';
 import Logo from './logo.png';
 import { appConfig } from './appConfig';
-import { IOSSwitch } from './ThemeToggleButton';
+import { ThemeModeSelector } from './ThemeToggleButton';
 import { Link } from 'react-router';
 const EnterpriseHeader = () => {
+    const theme = useTheme();
+    const isLightMode = theme.palette.mode === 'light';
     
     return (
         <Box sx={{ width: '100%', mb: 8 }}>
@@ -24,29 +21,34 @@ const EnterpriseHeader = () => {
                 alignItems: 'center',
                 px: 3,
                 py: 1,
-                borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-                bgcolor: 'rgba(12, 14, 18, 0.55)',
+                borderBottom: isLightMode
+                    ? '1px solid rgba(15, 23, 42, 0.12)'
+                    : '1px solid rgba(255, 255, 255, 0.12)',
+                bgcolor: isLightMode ? 'rgba(255, 255, 255, 0.72)' : 'rgba(12, 14, 18, 0.55)',
                 backdropFilter: 'blur(18px) saturate(160%)',
-                boxShadow: '0 12px 36px rgba(19, 2, 2, 0.35)'
+                boxShadow: isLightMode
+                    ? '0 12px 36px rgba(15, 23, 42, 0.12)'
+                    : '0 12px 36px rgba(19, 2, 2, 0.35)'
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Cpu size={14} color="#6b7280" />
-                        <Typography sx={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em' }}>
+                        <Cpu size={14} color={isLightMode ? '#64748b' : '#6b7280'} />
+                        <Typography sx={{ fontSize: '0.7rem', color: isLightMode ? '#64748b' : '#6b7280', fontWeight: 600, letterSpacing: '0.1em' }}>
                             ENGINE:  {appConfig.version}
                         </Typography>
 
-                          <Link className="text-xs flex items-center gap-1 text-gray-300 px-3 py-2  hover:text-white transition-colors" to="/docs">
+                          <Link
+                            className="text-xs flex items-center gap-1 px-3 py-2 transition-colors"
+                            style={{ color: isLightMode ? '#475569' : '#d1d5db' }}
+                            to="/docs"
+                          >
     Docs <ArrowDownRight className='w-3 rotate-[-90deg] m-0' />
     </Link>
                     </Box>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {/* <FormControlLabel
-        control={<IOSSwitch sx={{ m: 1 }} defaultChecked  />}
-        label="Dark Mode"
-      /> */}
+                    <ThemeModeSelector />
                    
                     <Chip
                         label="Latest Version"
@@ -55,7 +57,7 @@ const EnterpriseHeader = () => {
                             height: 20,
                             fontSize: '0.65rem',
                             bgcolor: 'rgba(16, 185, 129, 0.1)',
-                            color: '#74B87B',
+                            color: isLightMode ? '#15803d' : '#74B87B',
                             border: '1px solid rgba(16, 185, 129, 0.2)',
                             fontWeight: 700
                         }}
@@ -102,14 +104,20 @@ const EnterpriseHeader = () => {
                             <Box sx={{
                                 p: 1.5,
                                 borderRadius: '14px',
-                                background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(12, 14, 18, 0.9) 100%)',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                background: isLightMode
+                                    ? 'linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(255, 255, 255, 0.95) 100%)'
+                                    : 'linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(12, 14, 18, 0.9) 100%)',
+                                border: isLightMode
+                                    ? '1px solid rgba(15, 23, 42, 0.12)'
+                                    : '1px solid rgba(255, 255, 255, 0.2)',
                                 backdropFilter: 'blur(14px) saturate(150%)',
                                 display: 'flex',
                                 
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0 18px 50px rgba(0, 0, 0, 0.45)'
+                                boxShadow: isLightMode
+                                    ? '0 18px 50px rgba(15, 23, 42, 0.14)'
+                                    : '0 18px 50px rgba(0, 0, 0, 0.45)'
                             }}>
                                 <img src={Logo} className='w-7' />
                                 {/* <ShieldCheck size={32} color="#10b981" /> */}
@@ -117,7 +125,7 @@ const EnterpriseHeader = () => {
 
                             <Box sx={{ textAlign: 'left' }}>
                                 <Typography sx={{
-                                    color: '#9ca3af',
+                                    color: isLightMode ? '#64748b' : '#9ca3af',
                                     fontSize: '0.75rem',
                                     fontWeight: 700,
                                     letterSpacing: '0.3em',
@@ -127,7 +135,7 @@ const EnterpriseHeader = () => {
                                     Personic Health Systems
                                 </Typography>
                                 <Typography variant="h4" sx={{
-                                    color: '#f3f4f6',
+                                    color: isLightMode ? '#0f172a' : '#f3f4f6',
                                     fontWeight: 800,
                                     fontSize: '1.75rem',
                                     letterSpacing: '-0.01em'
@@ -137,10 +145,19 @@ const EnterpriseHeader = () => {
                                 </Typography>
                             </Box>
 
-                            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
+                            <Divider
+                                orientation="vertical"
+                                flexItem
+                                sx={{
+                                    mx: 1,
+                                    borderColor: isLightMode
+                                        ? 'rgba(15, 23, 42, 0.12)'
+                                        : 'rgba(255,255,255,0.1)'
+                                }}
+                            />
 
                             <Box sx={{ textAlign: 'right', minWidth: '100px' }}>
-                                <Typography sx={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 700, mb: 0.5 }}>
+                                <Typography sx={{ fontSize: '0.65rem', color: isLightMode ? '#64748b' : '#6b7280', fontWeight: 700, mb: 0.5 }}>
                                     STABLE RELEASE
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
@@ -159,14 +176,14 @@ const EnterpriseHeader = () => {
                     </Box>
 
                     <Typography sx={{
-                        color: '#9ca3af',
+                        color: isLightMode ? '#475569' : '#9ca3af',
                         maxWidth: '600px',
                         mx: 'auto',
                         fontSize: '1rem',
                         lineHeight: 1.6,
                         fontWeight: 400
                     }}>
-                        An advanced data processing platform that extracts and parses <span style={{ color: '#fff', fontWeight: 600 }}>Patient</span> order records with 99.9% accuracy, ensuring reliable and consistent data.
+                        An advanced data processing platform that extracts and parses <span style={{ color: isLightMode ? '#0f172a' : '#fff', fontWeight: 600 }}>Patient</span> order records with 99.9% accuracy, ensuring reliable and consistent data.
                     </Typography>
 
                     {/* <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 4 }}>

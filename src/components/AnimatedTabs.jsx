@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Paper, Button, Box } from "@mui/material";
+import { Paper, Button, Box, useTheme } from "@mui/material";
 
 const tabStyles = {
   ancillary:   { bg: "linear-gradient(135deg,#34d399,#10b981)", shadow: "0 6px 20px rgba(16,185,129,0.45)", border: "rgba(16,185,129,0.7)" },
@@ -9,6 +9,8 @@ const tabStyles = {
 };
 
 export default function AnimatedTabs({ tabCounts, activeTab, setActiveTab }) {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === "light";
   const pillRef = useRef(null);
   const btnRefs = useRef({});
   const [sliderStyle, setSliderStyle] = useState({ left: 5, width: 0, opacity: 0 });
@@ -41,11 +43,14 @@ export default function AnimatedTabs({ tabCounts, activeTab, setActiveTab }) {
       sx={{
         position: "relative",
         p: "5px",
-        background: "rgba(20,20,22,0)",
+        background: isLightMode ? "rgba(255,255,255,0.65)" : "rgba(20,20,22,0)",
         borderRadius: 999,
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: isLightMode
+          ? "1px solid rgba(15,23,42,0.14)"
+          : "1px solid rgba(255,255,255,0.08)",
         display: "inline-flex",
         gap: 0.5,
+        boxShadow: isLightMode ? "0 6px 16px rgba(15,23,42,0.08)" : "none",
       }}
     >
       {/* Sliding background pill */}
@@ -84,13 +89,21 @@ export default function AnimatedTabs({ tabCounts, activeTab, setActiveTab }) {
               fontWeight: 700,
               letterSpacing: "0.02em",
               textTransform: "none",
-              color: isActive ? "#0a0a0a" : "rgba(255,255,255,0.65)",
+              color: isActive
+                ? "#0a0a0a"
+                : isLightMode
+                  ? "rgba(15,23,42,0.72)"
+                  : "rgba(255,255,255,0.65)",
               background: "transparent",
               border: "none",
               transition: "color 0.25s ease",
               "&:hover": {
                 background: "transparent",  // slider handles the bg
-                color: isActive ? "#0a0a0a" : "rgba(255,255,255,0.9)",
+                color: isActive
+                  ? "#0a0a0a"
+                  : isLightMode
+                    ? "rgba(15,23,42,0.95)"
+                    : "rgba(255,255,255,0.9)",
               },
             }}
           >

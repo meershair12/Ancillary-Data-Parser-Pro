@@ -16,19 +16,36 @@ import {
   Grid3x3,
   Info
 } from 'lucide-react';
-import { appConfig } from './appConfig';
+import {
+  appConfig,
+  THEME_MODES,
+  getResolvedThemeMode,
+  subscribeToThemeChanges,
+} from './appConfig';
 import { Link } from 'react-router';
 import HelpDesk from './HelpDesk';
 
 const MediExtractDocumentation = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
+  const [resolvedThemeMode, setResolvedThemeMode] = useState(getResolvedThemeMode());
+  const isLightMode = resolvedThemeMode === THEME_MODES.LIGHT;
 
 
   useEffect(() => {
 
     document.title = "Documentation | " + appConfig.appName.first + appConfig.appName.second + " | Personic Health"
     
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeTheme = subscribeToThemeChanges((nextResolvedMode) => {
+      setResolvedThemeMode(nextResolvedMode);
+    });
+
+    return () => {
+      unsubscribeTheme();
+    };
   }, []);
   const navigationItems = [
     { id: 'overview', text: 'Overview', icon: Home },
@@ -41,20 +58,20 @@ const MediExtractDocumentation = () => {
   ];
 
   return (
-    <div className="bg-black min-h-screen text-white">
+    <div className={`${isLightMode ? 'bg-slate-50 text-slate-900' : 'bg-black text-white'} min-h-screen`}>
       {/* Header */}
-      <div className="fixed top-0 w-full z-40 bg-black border-b border-gray-800 shadow-lg">
+      <div className={`fixed top-0 w-full z-40 border-b shadow-lg ${isLightMode ? 'bg-white/95 border-slate-200' : 'bg-black border-gray-800'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden p-2 hover:bg-[#151517] rounded-lg transition"
+                className={`lg:hidden p-2 rounded-lg transition ${isLightMode ? 'hover:bg-slate-100' : 'hover:bg-[#151517]'}`}
               >
                 {mobileOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#141415] rounded-lg">
+                <div className={`p-2 rounded-lg ${isLightMode ? 'bg-slate-100' : 'bg-[#141415]'}`}>
                   {/* <BarChart3 className="text-white" size={24} /> */}
                   <img src='./favicon.png' className='w-[24px]' />
                 </div>
@@ -63,7 +80,7 @@ const MediExtractDocumentation = () => {
                     {appConfig.appName.first}{appConfig.appName.second}
                   </h1>
                 </div>
-                <Link to='/'>Home</Link>
+                <Link className={isLightMode ? 'text-slate-700 hover:text-slate-900' : 'text-gray-200 hover:text-white'} to='/'>Home</Link>
               </div>
             </div>
             <div className="px-3 py-1 bg-green-600 text-white rounded-full text-sm font-semibold">
@@ -76,18 +93,18 @@ const MediExtractDocumentation = () => {
       <div className="flex h-screen pt-16">
         {/* Sidebar */}
         <div
-          className={`fixed lg:static inset-y-0 left-0 z-30 w-80 bg-black border-r border-gray-800 transform transition-transform duration-300 lg:translate-x-0 ${
+          className={`fixed lg:static inset-y-0 left-0 z-30 w-80 border-r transform transition-transform duration-300 lg:translate-x-0 ${isLightMode ? 'bg-white border-slate-200' : 'bg-black border-gray-800'} ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           } mt-16 lg:mt-0`}
         >
-          <div className="p-6 border-b flex items-center gap-3 border-gray-800">
+          <div className={`p-6 border-b flex items-center gap-3 ${isLightMode ? 'border-slate-200' : 'border-gray-800'}`}>
             <div className="flex items-center gap-2 mb-3">
-              <div className="p-2 bg-[#151517] border border-gray-700 rounded-lg">
+              <div className={`p-2 border rounded-lg ${isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-[#151517] border-gray-700'}`}>
                <img src='./favicon.png' className='w-[20px]' />
               </div>
               <div>
-                <h2 className="text-white font-bold">{appConfig.appName.first}{appConfig.appName.second}</h2>
-                <p className="text-gray-400 text-xs">Documentation</p>
+                <h2 className={`font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{appConfig.appName.first}{appConfig.appName.second}</h2>
+                <p className={`${isLightMode ? 'text-slate-500' : 'text-gray-400'} text-xs`}>Documentation</p>
               </div>
             </div>
             <div className="px-3 py-1 bg-green-600 text-white rounded-full text-xs font-semibold inline-block">
@@ -107,8 +124,12 @@ const MediExtractDocumentation = () => {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     activeSection === item.id
-                      ? 'bg-[#151517] border-l-4 border-green-600 text-white'
-                      : 'text-gray-400 hover:bg-[#151517]'
+                      ? isLightMode
+                        ? 'bg-slate-100 border-l-4 border-green-600 text-slate-900'
+                        : 'bg-[#151517] border-l-4 border-green-600 text-white'
+                      : isLightMode
+                        ? 'text-slate-600 hover:bg-slate-100'
+                        : 'text-gray-400 hover:bg-[#151517]'
                   }`}
                 >
                   <Icon size={20} />
@@ -125,27 +146,27 @@ const MediExtractDocumentation = () => {
             {/* Overview Section */}
             {activeSection === 'overview' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <BarChart3 className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Overview</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Overview</h2>
                   </div>
-                  <p className="text-gray-300 mb-4 leading-relaxed">
+                  <p className={`${isLightMode ? 'text-slate-700' : 'text-gray-300'} mb-4 leading-relaxed`}>
                     MediExtract is an advanced data processing and parsing platform designed to extract, 
                     normalize, and structure patient order records from EMR systems with{' '}
                     <span className="text-green-600 font-bold">
                       99.9% accuracy
                     </span>.
                   </p>
-                  <p className="text-gray-300 leading-relaxed">
+                  <p className={`${isLightMode ? 'text-slate-700' : 'text-gray-300'} leading-relaxed`}>
                     The platform ensures reliable, consistent, and audit-ready data that can be seamlessly 
                     integrated into downstream systems such as analytics dashboards and workflow management tools.
                   </p>
                   
-                  <div className="mt-8 p-4 bg-[#09090a] border border-gray-700 rounded-xl">
-                    <p className="text-gray-200">
+                  <div className={`mt-8 p-4 border rounded-xl ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-[#09090a] border-gray-700'}`}>
+                    <p className={`${isLightMode ? 'text-slate-700' : 'text-gray-200'}`}>
                       <strong className="text-green-600">MediExtract {appConfig.version}</strong> focuses on high-precision parsing of{' '}
                       <strong className="text-green-600">Patient Orders</strong>, enabling healthcare teams to efficiently process{' '}
                       <strong className="text-green-600">Ancillary</strong>, <strong className="text-green-600">Ultramist</strong>, <strong className="text-green-600">Wound Surveillance Visits</strong>, and{' '}
@@ -155,28 +176,28 @@ const MediExtractDocumentation = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-[#151517] border border-gray-800 rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105">
+                  <div className={`p-6 border rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105 ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                     <div className="bg-green-600 p-4 rounded-full w-fit mx-auto mb-4">
                       <CheckCircle className="text-white" size={32} />
                     </div>
-                    <h3 className="font-bold text-white text-center">99.9% Accuracy</h3>
-                    <p className="text-gray-400 text-center mt-2 text-sm">Industry-leading extraction</p>
+                    <h3 className={`font-bold text-center ${isLightMode ? 'text-slate-900' : 'text-white'}`}>99.9% Accuracy</h3>
+                    <p className={`${isLightMode ? 'text-slate-500' : 'text-gray-400'} text-center mt-2 text-sm`}>Industry-leading extraction</p>
                   </div>
 
-                  <div className="p-6 bg-[#151517] border border-gray-800 rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105">
+                  <div className={`p-6 border rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105 ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                     <div className="bg-green-600 p-4 rounded-full w-fit mx-auto mb-4">
                       <Grid3x3 className="text-white" size={32} />
                     </div>
-                    <h3 className="font-bold text-white text-center">Seamless Integration</h3>
-                    <p className="text-gray-400 text-center mt-2 text-sm">Works with Monday.com</p>
+                    <h3 className={`font-bold text-center ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Seamless Integration</h3>
+                    <p className={`${isLightMode ? 'text-slate-500' : 'text-gray-400'} text-center mt-2 text-sm`}>Works with Monday.com</p>
                   </div>
 
-                  <div className="p-6 bg-[#151517] border border-gray-800 rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105">
+                  <div className={`p-6 border rounded-xl hover:shadow-lg hover:shadow-green-600/20 transition-all transform hover:scale-105 ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                     <div className="bg-green-600 p-4 rounded-full w-fit mx-auto mb-4">
                       <Cloud className="text-white" size={32} />
                     </div>
-                    <h3 className="font-bold text-white text-center">Automated Processing</h3>
-                    <p className="text-gray-400 text-center mt-2 text-sm">Minimal manual work</p>
+                    <h3 className={`font-bold text-center ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Automated Processing</h3>
+                    <p className={`${isLightMode ? 'text-slate-500' : 'text-gray-400'} text-center mt-2 text-sm`}>Minimal manual work</p>
                   </div>
                 </div>
               </div>
@@ -185,12 +206,12 @@ const MediExtractDocumentation = () => {
             {/* Features Section */}
             {activeSection === 'features' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-8">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <BarChart3 className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Key Features</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Key Features</h2>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -204,13 +225,13 @@ const MediExtractDocumentation = () => {
                       { title: 'CSV export', desc: 'Third-party integrations' },
                       { title: 'Monday.com integration', desc: 'Seamless workspace import' },
                     ].map((feature, index) => (
-                      <div key={index} className="flex items-start p-6 bg-[#09090a] rounded-xl border border-gray-700 hover:border-green-600/50 transition-all">
+                      <div key={index} className={`flex items-start p-6 rounded-xl border hover:border-green-600/50 transition-all ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-[#09090a] border-gray-700'}`}>
                         <div className="bg-green-600/20 p-3 rounded-lg w-12 text-center mr-4 flex-shrink-0">
                           <span className="text-green-600 font-bold text-lg">✓</span>
                         </div>
                         <div>
-                          <h3 className="font-semibold text-white">{feature.title}</h3>
-                          <p className="text-gray-400 mt-1 text-sm">{feature.desc}</p>
+                          <h3 className={`font-semibold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{feature.title}</h3>
+                          <p className={`${isLightMode ? 'text-slate-500' : 'text-gray-400'} mt-1 text-sm`}>{feature.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -222,16 +243,16 @@ const MediExtractDocumentation = () => {
             {/* Order Types Section */}
             {activeSection === 'order-types' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-8">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <Calendar className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Order Types & Date Rules</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Order Types & Date Rules</h2>
                   </div>
                   
-                  <div className="mb-8 p-4 bg-amber-900/20 border border-amber-700 rounded-xl">
-                    <p className="text-amber-100">
+                  <div className="mb-8 p-4 bg-amber-200/20 dark:bg-amber-900/20 border border-amber-700 rounded-xl">
+                    <p className="text-amber-700 dark:text-amber-100">
                       <strong>Important:</strong> Selecting an incorrect date range may result in missing or incomplete data.
                     </p>
                   </div>
@@ -239,7 +260,7 @@ const MediExtractDocumentation = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="bg-[#09090a] border-b border-gray-700">
+                        <tr className={`${isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-[#09090a] border-gray-700'} border-b`}>
                           <th className="text-green-600 font-bold text-left p-4">Order Type</th>
                           <th className="text-green-600 font-bold text-left p-4">Start Date Rule</th>
                           <th className="text-green-600 font-bold text-left p-4">Status</th>
@@ -251,13 +272,13 @@ const MediExtractDocumentation = () => {
                           { type: 'Ultramist', date: 'TBD (Team Lead to confirm)' },
                           { type: 'Surgical', date: 'TBD (Team Lead to confirm)' },
                         ].map((row, idx) => (
-                          <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
-                            <td className="text-gray-200 p-4">
+                          <tr key={idx} className={`border-b hover:bg-green-800/30 ${isLightMode ? 'border-slate-200' : 'border-gray-800'}`}>
+                            <td className={`${isLightMode ? 'text-slate-700' : 'text-gray-200'} p-4`}>
                               <span className="inline-block px-3 py-1 rounded-full text-white font-semibold text-sm bg-green-600">
                                 {row.type}
                               </span>
                             </td>
-                            <td className="text-gray-300 p-4">{row.date}</td>
+                            <td className={`${isLightMode ? 'text-slate-600' : 'text-gray-300'} p-4`}>{row.date}</td>
                             <td className="p-4">
                               <span className="inline-block px-3 py-1 rounded-full text-white font-semibold text-sm bg-amber-600">
                                 Pending
@@ -269,7 +290,7 @@ const MediExtractDocumentation = () => {
                     </table>
                   </div>
 
-                  <p className="text-gray-400 mt-8 p-4 bg-[#09090a] rounded-lg border border-gray-700">
+                  <p className={`mt-8 p-4 rounded-lg border ${isLightMode ? 'text-slate-500 bg-slate-50 border-slate-200' : 'text-gray-400 bg-[#09090a] border-gray-700'}`}>
                     Start date rules are pending confirmation by the team lead. Please wait for the final values
                     before generating reports.
                   </p>
@@ -280,12 +301,12 @@ const MediExtractDocumentation = () => {
             {/* Step-by-Step Section */}
             {activeSection === 'step-by-step' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-8">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <Clock className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">How to Use MediExtract</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>How to Use MediExtract</h2>
                   </div>
 
                   <div className="space-y-6">
@@ -340,12 +361,12 @@ const MediExtractDocumentation = () => {
                           {idx < 3 && <div className="w-1 h-16 bg-gradient-to-b from-green-600 to-transparent mt-2"></div>}
                         </div>
                         <div className="flex-1 pb-6">
-                          <h3 className="font-bold text-white mb-4">{section.title}</h3>
-                          <div className="p-6 bg-[#09090a] rounded-lg border border-gray-700 space-y-3">
+                          <h3 className={`font-bold mb-4 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{section.title}</h3>
+                          <div className={`p-6 rounded-lg border space-y-3 ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-[#09090a] border-gray-700'}`}>
                             {section.steps.map((step, i) => (
                               <div key={i} className="flex items-start gap-3">
                                 <span className="text-green-600 font-bold min-w-fit">{i + 1}.</span>
-                                <span className="text-gray-300">{step}</span>
+                                <span className={isLightMode ? 'text-slate-700' : 'text-gray-300'}>{step}</span>
                               </div>
                             ))}
                             {section.alert && (
@@ -365,20 +386,20 @@ const MediExtractDocumentation = () => {
             {/* Monday Integration Section */}
             {activeSection === 'monday-integration' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-8">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <Zap className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Monday.com Integration</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Monday.com Integration</h2>
                   </div>
 
                   <div className="mb-8">
-                    <h3 className="font-bold text-white mb-4">Override Rules</h3>
+                    <h3 className={`font-bold mb-4 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Override Rules</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="bg-[#09090a] border-b border-gray-700">
+                          <tr className={`${isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-[#09090a] border-gray-700'} border-b`}>
                             <th className="text-green-600 font-bold text-left p-4">Order Type</th>
                             <th className="text-green-600 font-bold text-left p-4">Override Rule</th>
                           </tr>
@@ -389,14 +410,14 @@ const MediExtractDocumentation = () => {
                             { type: 'Ultramist', rule: 'Override by MRN' },
                             { type: 'Surgical', rule: 'Override by MRN' },
                           ].map((row, idx) => (
-                            <tr key={idx} className="border-b border-gray-800 hover:bg-green-800/30">
-                              <td className="text-gray-200 p-4">
+                            <tr key={idx} className={`border-b hover:bg-green-800/30 ${isLightMode ? 'border-slate-200' : 'border-gray-800'}`}>
+                              <td className={`${isLightMode ? 'text-slate-700' : 'text-gray-200'} p-4`}>
                                 <span className="inline-block px-3 py-1 rounded-full text-white text-sm bg-green-600">
                                   {row.type}
                                 </span>
                               </td>
-                              <td className="text-gray-300 p-4">
-                                <span className="inline-block px-3 py-1 rounded-full text-gray-200 text-sm bg-zinc-700">
+                              <td className={`${isLightMode ? 'text-slate-600' : 'text-gray-300'} p-4`}>
+                                <span className={`inline-block px-3 py-1 rounded-full text-sm ${isLightMode ? 'text-slate-700 bg-slate-200' : 'text-gray-200 bg-zinc-700'}`}>
                                   {row.rule}
                                 </span>
                               </td>
@@ -414,16 +435,16 @@ const MediExtractDocumentation = () => {
                       { step: 'Step 7: Apply Override Rules', items: ['Select the correct override rule based on order type'] },
                       { step: 'Step 8: Start Upload', items: ['Confirm mappings', 'Start the upload', 'Wait for completion'] },
                     ].map((section, idx) => (
-                      <details key={idx} className="bg-[#09090a] border border-gray-700 rounded-xl">
-                        <summary className="p-4 cursor-pointer font-bold text-white flex items-center justify-between hover:bg-green-800/20">
+                      <details key={idx} className={`${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-[#09090a] border-gray-700'} border rounded-xl`}>
+                        <summary className={`p-4 cursor-pointer font-bold flex items-center justify-between hover:bg-green-800/20 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                           {section.step}
                           <ChevronDown size={20} />
                         </summary>
-                        <div className="p-4 border-t border-gray-700 space-y-3">
+                        <div className={`p-4 border-t space-y-3 ${isLightMode ? 'border-slate-200' : 'border-gray-700'}`}>
                           {section.items.map((item, i) => (
                             <div key={i} className="flex items-start gap-3">
                               <span className="text-green-600 font-bold min-w-fit">{i + 1}.</span>
-                              <span className="text-gray-300">{item}</span>
+                              <span className={isLightMode ? 'text-slate-700' : 'text-gray-300'}>{item}</span>
                             </div>
                           ))}
                         </div>
@@ -436,7 +457,7 @@ const MediExtractDocumentation = () => {
                       <CheckCircle size={20} />
                       Process Completion
                     </h3>
-                    <ul className="space-y-2 text-gray-300">
+                    <ul className={`space-y-2 ${isLightMode ? 'text-slate-700' : 'text-gray-300'}`}>
                       <li className="flex items-start gap-2">
                         <span className="text-green-600 font-bold">•</span>
                         Patient orders available in Monday.com board
@@ -458,23 +479,23 @@ const MediExtractDocumentation = () => {
             {/* Notes Section */}
             {activeSection === 'notes' && (
               <div className="space-y-8">
-                <div className="p-8 bg-[#151517] border border-gray-800 rounded-2xl shadow-2xl">
+                <div className={`p-8 border rounded-2xl shadow-2xl ${isLightMode ? 'bg-white border-slate-200' : 'bg-[#151517] border-gray-800'}`}>
                   <div className="flex items-center gap-4 mb-8">
                     <div className="p-3 bg-green-600/20 rounded-xl">
                       <Settings className="text-green-600" size={32} />
                     </div>
-                    <h2 className="text-3xl font-bold text-white">Notes & Best Practices</h2>
+                    <h2 className={`text-3xl font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Notes & Best Practices</h2>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="p-4 bg-green-900/20 border border-green-700 rounded-xl">
-                      <p className="text-green-100">
-                        <strong className="text-green-600">Version Compatibility:</strong> This documentation applies to MediExtract {appConfig.version}
+                    <div className="p-4 bg-green-500/10 dark:bg-green-900/20 border border-green-700 rounded-xl">
+                      <p className="text-green-700 dark:text-green-100">
+                        <strong className="text-green-600 ">Version Compatibility:</strong> This documentation applies to MediExtract {appConfig.version}
                       </p>
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-bold text-white flex items-center gap-2">
+                      <h3 className={`font-bold flex items-center gap-2 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                         <Shield className="text-green-600" size={20} />
                         Critical Checks
                       </h3>
@@ -488,18 +509,18 @@ const MediExtractDocumentation = () => {
                         ].map((check, i) => (
                           <div key={i} className="flex items-start gap-3">
                             <AlertCircle className="text-green-600 mt-0.5 flex-shrink-0" size={18} />
-                            <span className="text-gray-300">{check}</span>
+                            <span className={isLightMode ? 'text-slate-700' : 'text-gray-300'}>{check}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-bold text-white flex items-center gap-2">
+                      <h3 className={`font-bold flex items-center gap-2 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                         <Zap className="text-green-600" size={20} />
                         Performance Tips
                       </h3>
-                      <ul className="list-disc pl-6 space-y-2 text-gray-300 ml-2">
+                      <ul className={`list-disc pl-6 space-y-2 ml-2 ${isLightMode ? 'text-slate-700' : 'text-gray-300'}`}>
                         <li>Process large files during off-peak hours</li>
                         <li>Keep MediExtract updated to latest version</li>
                         <li>Verify EMR system compatibility before processing</li>
@@ -507,8 +528,8 @@ const MediExtractDocumentation = () => {
                       </ul>
                     </div>
 
-                    <div className="p-6 bg-[#09090a] rounded-xl border border-gray-700">
-                      <p className="text-gray-300 italic">
+                    <div className={`p-6 rounded-xl border ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-[#09090a] border-gray-700'}`}>
+                      <p className={`${isLightMode ? 'text-slate-700' : 'text-gray-300'} italic`}>
                         <strong className="text-green-600">MediExtract {appConfig.version}</strong> ensures efficient, accurate, and scalable patient order data processing from EMR to operational workflows.
                       </p>
                     </div>

@@ -105,7 +105,8 @@ import {
   Button, 
   Divider, 
   CircularProgress, 
-  Fade 
+  Fade,
+  useTheme,
 } from "@mui/material";
 import { 
   Trash2 as TrashIcon, 
@@ -121,6 +122,8 @@ export default function FloatingDeleteBar({
   isDeleting,
   setDeleting,
 }) {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === "light";
   
   const handleCancel = () => {
     setDeleting(false);
@@ -147,12 +150,17 @@ export default function FloatingDeleteBar({
           sx={{
             display: "flex",
             alignItems: "center",
-            bgcolor: "#18181b", // Monday.com's signature dark navy
-            color: "white",
+            bgcolor: isLightMode ? "rgba(255, 255, 255, 0.92)" : "#18181b",
+            color: isLightMode ? "#0f172a" : "white",
             borderRadius: "8px",
             overflow: "hidden",
             height: "56px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: isLightMode
+              ? "1px solid rgba(15, 23, 42, 0.14)"
+              : "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: isLightMode
+              ? "0 12px 28px rgba(15, 23, 42, 0.14)"
+              : undefined,
           }}
         >
           {/* Section 1: Selection Status */}
@@ -174,12 +182,22 @@ export default function FloatingDeleteBar({
             >
               {selectedCount}
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 500, color: "#cbd5e1" }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, color: isLightMode ? "#64748b" : "#cbd5e1" }}
+            >
               Items selected
             </Typography>
           </Box>
 
-          <Divider orientation="vertical" flexItem sx={{ bgcolor: "rgba(255,255,255,0.1)", my: 1.5 }} />
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{
+              bgcolor: isLightMode ? "rgba(15,23,42,0.14)" : "rgba(255,255,255,0.1)",
+              my: 1.5,
+            }}
+          />
 
           {/* Section 2: Actions */}
           <Box sx={{ px: 1, display: "flex", alignItems: "center", gap: 1 }}>
@@ -196,7 +214,9 @@ export default function FloatingDeleteBar({
                   bgcolor: "rgba(255, 77, 77, 0.1)",
                 },
                 "&.Mui-disabled": {
-                  color: "rgba(255, 255, 255, 0.3)",
+                  color: isLightMode
+                    ? "rgba(15, 23, 42, 0.35)"
+                    : "rgba(255, 255, 255, 0.3)",
                 }
               }}
             >
@@ -207,13 +227,15 @@ export default function FloatingDeleteBar({
               onClick={handleCancel}
               startIcon={<CloseIcon size={18} />}
               sx={{
-                color: "#94a3b8",
+                color: isLightMode ? "#64748b" : "#94a3b8",
                 textTransform: "none",
                 fontWeight: 500,
                 px: 2,
                 "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.05)",
-                  color: "white",
+                  bgcolor: isLightMode
+                    ? "rgba(59, 130, 246, 0.08)"
+                    : "rgba(255, 255, 255, 0.05)",
+                  color: isLightMode ? "#0f172a" : "white",
                 },
               }}
             >

@@ -1,73 +1,101 @@
-import { styled, Switch } from "@mui/material";
+import { useState } from "react";
+import { ToggleButton, ToggleButtonGroup, Tooltip, useTheme } from "@mui/material";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { THEME_MODES, getStoredThemeMode, setThemeMode } from "./appConfig";
 
-export const IOSSwitch = styled((props) =>
-    {
-        const onThemeSwitch = (e) => {
-            const isDarkMode = e.target.checked;    
-            if (isDarkMode) {
-                document.body.classList.add('light');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.body.classList.remove('light');
-                document.body.classList.remove('light');
-            }
-        };
-        return <Switch onChange={onThemeSwitch} focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />;
+export function ThemeModeSelector() {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === "light";
+  const [mode, setMode] = useState(getStoredThemeMode());
+
+  const onModeChange = (_event, nextMode) => {
+    if (!nextMode) {
+      return;
     }
-)(({ theme }) => ({
-  width: 42,
-  height: 26,
-  padding: 0,
-  '& .MuiSwitch-switchBase': {
-    padding: 0,
-    margin: 2,
-    transitionDuration: '300ms',
-    '&.Mui-checked': {
-      transform: 'translateX(16px)',
-      color: '#fff',
-      '& + .MuiSwitch-track': {
-        backgroundColor: '#65C466',
-        opacity: 1,
-        border: 0,
-        ...theme.applyStyles('dark', {
-          backgroundColor: '#2ECA45',
-        }),
-      },
-      '&.Mui-disabled + .MuiSwitch-track': {
-        opacity: 0.5,
-      },
+    setMode(nextMode);
+    setThemeMode(nextMode);
+  };
+
+  const options = [
+    {
+      value: THEME_MODES.SYSTEM,
+      label: "System",
+      title: "Follow System Theme",
+      icon: <Monitor size={14} />,
     },
-    '&.Mui-focusVisible .MuiSwitch-thumb': {
-      color: '#33cf4d',
-      border: '6px solid #fff',
+    {
+      value: THEME_MODES.LIGHT,
+      label: "Light",
+      title: "Use Light Theme",
+      icon: <Sun size={14} />,
     },
-    '&.Mui-disabled .MuiSwitch-thumb': {
-      color: theme.palette.grey[100],
-      ...theme.applyStyles('dark', {
-        color: theme.palette.grey[600],
-      }),
+    {
+      value: THEME_MODES.DARK,
+      label: "Dark",
+      title: "Use Dark Theme",
+      icon: <Moon size={14} />,
     },
-    '&.Mui-disabled + .MuiSwitch-track': {
-      opacity: 0.7,
-      ...theme.applyStyles('dark', {
-        opacity: 0.3,
-      }),
-    },
-  },
-  '& .MuiSwitch-thumb': {
-    boxSizing: 'border-box',
-    width: 22,
-    height: 22,
-  },
-  '& .MuiSwitch-track': {
-    borderRadius: 26 / 2,
-    backgroundColor: '#E9E9EA',
-    opacity: 1,
-    transition: theme.transitions.create(['background-color'], {
-      duration: 500,
-    }),
-    ...theme.applyStyles('dark', {
-      backgroundColor: '#39393D',
-    }),
-  },
-}));
+  ];
+
+  return (
+    <ToggleButtonGroup
+      size="small"
+      exclusive
+      value={mode}
+      onChange={onModeChange}
+      sx={{
+        borderRadius: 999,
+        overflow: "hidden",
+        background: isLightMode
+          ? "rgba(255,255,255,0.78)"
+          : "rgba(15, 23, 42, 0.38)",
+        border: isLightMode
+          ? "1px solid rgba(15, 23, 42, 0.14)"
+          : "1px solid rgba(255,255,255,0.16)",
+        boxShadow: isLightMode
+          ? "0 6px 16px rgba(15, 23, 42, 0.08)"
+          : "0 8px 18px rgba(0,0,0,0.28)",
+        "& .MuiToggleButton-root": {
+          border: "none",
+          px: 1.4,
+          py: 0.55,
+          minHeight: 34,
+          gap: 0.7,
+          textTransform: "none",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          letterSpacing: "0.01em",
+          color: isLightMode ? "#475569" : "#cbd5e1",
+          transition: "all 160ms ease",
+          "&:hover": {
+            background: isLightMode
+              ? "rgba(59, 130, 246, 0.08)"
+              : "rgba(255,255,255,0.1)",
+            color: isLightMode ? "#0f172a" : "#f1f5f9",
+          },
+          "&.Mui-selected": {
+            color: "#03110d",
+            background: "linear-gradient(135deg, #84cc8f 0%, #74B87B 100%)",
+            boxShadow: "0 6px 14px rgba(16, 185, 129, 0.28)",
+          },
+          "&.Mui-selected:hover": {
+            background: "linear-gradient(135deg, #79bf84 0%, #66ab70 100%)",
+          },
+        },
+      }}
+      aria-label="theme mode"
+    >
+      {options.map((option) => (
+        <Tooltip key={option.value} title={option.title}>
+          <ToggleButton value={option.value} aria-label={`${option.label.toLowerCase()} theme`}>
+            {option.icon}
+            <span>{option.label}</span>
+          </ToggleButton>
+        </Tooltip>
+      ))}
+    </ToggleButtonGroup>
+  );
+}
+
+// Backward-compatible export for existing imports.
+export const IOSSwitch = ThemeModeSelector;

@@ -152,8 +152,7 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             descriptor.toUpperCase() === "DEBRIDEMENT") {
                             uid = `${currentMRN}_${finalDescriptor}`;
                         }
-                        if (currentCategory.toLowerCase() === "laboratory" &&
-                            descriptor.toLowerCase() === "debridement method wound") {
+                        if (descriptor.toLowerCase() === "debridement method wound") {
 
                             uid = `${currentMRN}_${finalDescriptor}`;
                         }
@@ -171,13 +170,6 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             physician: currentPhysician.trim() == "Physician not specified" ? "" : currentPhysician.trim(),
                             dateOrdered,
                             state: stateCode.trim(),
-                            // status: (finalDescriptor && typeof finalDescriptor === 'string' &&
-                            //     (finalDescriptor.includes("Wound microorganism gene identification panel by NAA with probe detection") ||
-                            //         finalDescriptor.includes("Bacteria identified")))
-                            //     ? "Priority Labs (Or other PCR Lab)"
-                            //     : "",
-
-
                             uid: uid.trim()
                         };
 
@@ -185,12 +177,12 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                             descriptor.toUpperCase() === "DEBRIDEMENT") {
                             parsedTherapies.push(record);
                         }
-                        else if (currentCategory.toLowerCase() === "laboratory" &&
-                            descriptor.toLowerCase() === "debridement method wound") {
+                        else if (
+                            String(descriptor).trim() === "Debridement method Wound") {
                             surgicalOrders.push(record);
                         }
-                        else if (currentCategory.toLowerCase() === "laboratory" &&
-                            descriptor.toLowerCase() === "observation update status") {
+                        else if (
+                            String(descriptor).trim() === "Observation Update Status") {
                             woundSurveillanceVisits.push(record);
                         }
                         else {
@@ -198,13 +190,10 @@ export function parseAncillaryDataAsync(rawRows, stateCode, onProgress) {
                         }
                     }
                 }
-
-               
                 processed = Math.min(endIndex - 8, totalRows);
 
             }
 
-           
             onProgress?.({
                percentage: Math.min(
         ((processed / totalRows) * 100),

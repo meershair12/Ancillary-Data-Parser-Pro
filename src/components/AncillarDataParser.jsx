@@ -42,7 +42,7 @@ import {
   Trash2,
 } from "lucide-react";
 import ExcelLogo from "../assets/excel.png";
-import { DataGrid, DataGridPro } from "@mui/x-data-grid-pro";
+import {DataGridPro}  from "@mui/x-data-grid-pro";
 import {
   CloudUpload,
   Description,
@@ -72,7 +72,12 @@ import EnterpriseModal from "./StateConfigMode";
 import ReportPeriodCard from "./ReportPeriodCard";
 import AppleGlassInput from "./AppleGlassInput";
 import GlassFileHeader from "./GlassFileHeader";
-import { appConfig } from "./appConfig";
+import {
+  appConfig,
+  THEME_MODES,
+  getResolvedThemeMode,
+  subscribeToThemeChanges,
+} from "./appConfig";
 import AnimatedTabs from "./AnimatedTabs";
 
 
@@ -353,6 +358,60 @@ const darkTheme = createTheme({
 
 });
 
+const lightTheme = createTheme({
+  palette: {
+    mode: "light",
+    primary: {
+      main: "#2f6bff",
+    },
+    secondary: {
+      main: "#0ea5e9",
+    },
+    background: {
+      default: "rgba(255, 255, 255, 0)",
+      paper: "rgba(255, 255, 255, 0.82)",
+    },
+    text: {
+      primary: "#0f172a",
+      secondary: "#334155",
+    },
+  },
+  typography: {
+    fontFamily: '"Manrope", "Space Grotesk", sans-serif',
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: "rgba(255, 255, 255, 0)",
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+          backgroundColor: "rgba(255, 255, 255, 0.82)",
+          borderRadius: 20,
+          border: "1px solid rgba(15, 23, 42, 0.12)",
+          backdropFilter: "blur(22px) saturate(150%)",
+          boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 14,
+          textTransform: "none",
+          fontWeight: 600,
+          padding: "10px 24px",
+        },
+      },
+    },
+  },
+});
+
 const tabConfig = {
   ancillary: {
     label: "Ancillary Orders",
@@ -415,6 +474,20 @@ export default function AncillaryDataParser() {
   const hasShownMissingPhysicianAlertRef = useRef(false);
 
   const controls = useAnimation();
+  const [resolvedThemeMode, setResolvedThemeMode] = useState(
+    getResolvedThemeMode(),
+  );
+  const isLightMode = resolvedThemeMode === THEME_MODES.LIGHT;
+  const pageTextColor = isLightMode ? "#0f172a" : "#e5e7eb";
+  const subtleTextColor = isLightMode
+    ? "rgba(15, 23, 42, 0.68)"
+    : "rgba(255,255,255,0.6)";
+  const panelBackground = isLightMode
+    ? "rgba(255, 255, 255, 0.78)"
+    : "rgba(12, 14, 18, 0.6)";
+  const panelBorder = isLightMode
+    ? "1px solid rgba(15, 23, 42, 0.12)"
+    : "1px solid rgba(255, 255, 255, 0.16)";
 
   const flushProgressUpdates = useCallback((totalFiles) => {
     const progressEntries = Array.from(progressMapRef.current.entries());
@@ -488,6 +561,17 @@ export default function AncillaryDataParser() {
   }, []);
 
   useEffect(() => {
+    setResolvedThemeMode(getResolvedThemeMode());
+    const unsubscribeTheme = subscribeToThemeChanges((nextResolvedMode) => {
+      setResolvedThemeMode(nextResolvedMode);
+    });
+
+    return () => {
+      unsubscribeTheme();
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (progressRafRef.current) {
         cancelAnimationFrame(progressRafRef.current);
@@ -538,7 +622,7 @@ export default function AncillaryDataParser() {
         </div>,
         {
           position: "top-center",
-          theme: "dark",
+          theme: isLightMode ? "light" : "dark",
           autoClose: 2000,
           hideProgressBar: true,
           closeOnClick: true,
@@ -557,7 +641,7 @@ export default function AncillaryDataParser() {
         {
           position: "top-center",
           autoClose: 2000,
-          theme: "dark",
+          theme: isLightMode ? "light" : "dark",
           hideProgressBar: true,
           closeOnClick: true,
           pauseOnHover: true,
@@ -1080,6 +1164,7 @@ export default function AncillaryDataParser() {
             onProgress,
           );
 
+          
           // Merge results with UNIQUE IDs and UNIQUE UIDs
           const addUniqueId = (arr) =>
             arr.map((r) => ({ ...r, id: crypto.randomUUID() }));
@@ -1178,6 +1263,7 @@ export default function AncillaryDataParser() {
       ...mergedWoundSurveilance,
     ].filter((row) => !String(row.physician || "").trim()).length;
 
+    
     // Set final data
     setData({
       parsedGeneral: mergedGeneral,
@@ -1186,18 +1272,17 @@ export default function AncillaryDataParser() {
       parsedWoundSurveilance: mergedWoundSurveilance,
       summary: {
         totalParsedCount:
-          mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
+        mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
         generalParsedCount: mergedGeneral.length,
         therapiesParsedCount: mergedTherapies.length,
         surgicalParsedCount: mergedSurgical.length,
         woundSurveillanceParsedCount: mergedWoundSurveilance.length,
         missingPhysicianCount: mergedMissingPhysicianCount,
-        totalCount:
-          mergedGeneral.length + mergedTherapies.length + mergedSurgical.length,
-        generalCount: mergedGeneral.length,
-        therapiesCount: mergedTherapies.length,
-        surgicalCount: mergedSurgical.length,
-        woundSurveillanceCount: mergedWoundSurveilance.length,
+        totalCount:   results[0]?.summary?.totalCount,
+        generalCount: results[0]?.summary?.generalCount,
+        therapiesCount: results[0]?.summary?.therapiesCount,
+        surgicalCount: results[0]?.summary?.surgicalCount,
+        woundSurveillanceCount: results[0]?.summary?.surveillanceCount,
       },
     });
 
@@ -1394,12 +1479,16 @@ export default function AncillaryDataParser() {
   );
 
 
-  const activeMUIGridHeader = statsConfig.find(s => s.tab == activeTab)
+  const activeMUIGridHeader =
+    statsConfig.find((s) => s.tab === activeTab) || {
+      color: isLightMode ? "#334155" : "rgba(255,255,255,0.7)",
+      icon: null,
+    };
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={isLightMode ? lightTheme : darkTheme}>
       <CssBaseline />
-      <ToastContainer />
+      <ToastContainer theme={isLightMode ? "light" : "dark"} />
 
       <Modal open={open} onClose={() => setOpen(false)}>
         <Box
@@ -1413,9 +1502,13 @@ export default function AncillaryDataParser() {
             overflow: "auto",
             p: 3,
             borderRadius: 4,
-            background: "rgb(8, 8, 8)",
-            border: "1px solid rgba(255, 255, 255, 0.16)",
-            boxShadow: "0 24px 70px rgba(0, 0, 0, 0.65)",
+            background: isLightMode ? "rgba(255, 255, 255, 0.92)" : "rgb(8, 8, 8)",
+            border: isLightMode
+              ? "1px solid rgba(15, 23, 42, 0.14)"
+              : "1px solid rgba(255, 255, 255, 0.16)",
+            boxShadow: isLightMode
+              ? "0 24px 70px rgba(15, 23, 42, 0.16)"
+              : "0 24px 70px rgba(0, 0, 0, 0.65)",
             backdropFilter: "blur(18px)",
           }}
         >
@@ -1427,7 +1520,7 @@ export default function AncillaryDataParser() {
               mb: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: "#fff", fontWeight: 800 }}>
+            <Typography variant="h6" sx={{ color: pageTextColor, fontWeight: 800 }}>
               Data Validation Alert
             </Typography>
             <IconButton onClick={() => setOpen(false)} size="small">
@@ -1462,16 +1555,18 @@ export default function AncillaryDataParser() {
                 key={item.label}
                 label={`${item.label}: ${item.count}`}
                 sx={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                  color: "rgba(255,255,255,0.9)",
+                  background: isLightMode ? "rgba(15, 23, 42, 0.06)" : "rgba(255,255,255,0.08)",
+                  border: isLightMode
+                    ? "1px solid rgba(15, 23, 42, 0.14)"
+                    : "1px solid rgba(255,255,255,0.16)",
+                  color: isLightMode ? "#1e293b" : "rgba(255,255,255,0.9)",
                 }}
               />
             ))}
           </Box>
           <Typography
             variant="subtitle2"
-            sx={{ color: "rgba(255,255,255,0.8)", mb: 1 }}
+            sx={{ color: isLightMode ? "rgba(15, 23, 42, 0.8)" : "rgba(255,255,255,0.8)", mb: 1 }}
           >
             Sample Orders (first 8)
           </Typography>
@@ -1491,14 +1586,18 @@ export default function AncillaryDataParser() {
                 sx={{
                   p: 1.2,
                   borderRadius: 2,
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  background: "rgba(255,255,255,0.04)",
+                  border: isLightMode
+                    ? "1px solid rgba(15, 23, 42, 0.14)"
+                    : "1px solid rgba(255,255,255,0.14)",
+                  background: isLightMode
+                    ? "rgba(15, 23, 42, 0.04)"
+                    : "rgba(255,255,255,0.04)",
                 }}
               >
-                <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>
+                <Typography sx={{ color: pageTextColor, fontWeight: 700, fontSize: 13 }}>
                   {row.orderType} | {row.patientName || "Unknown Patient"} | {row.mrn || "No MRN"}
                 </Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.68)", fontSize: 12 }}>
+                <Typography sx={{ color: subtleTextColor, fontSize: 12 }}>
                   Missing: {row.missingFields.join(", ")}
                 </Typography>
               </Paper>
@@ -1543,7 +1642,7 @@ export default function AncillaryDataParser() {
           backgroundAttachment: "fixed",
           // backgroundImage:
           //   "radial-gradient(circle at 15% 15%, rgba(16,185,129,0.2) 0%, transparent 42%), radial-gradient(circle at 85% 12%, rgba(59,130,246,0.18) 0%, transparent 40%), linear-gradient(140deg, #07090f 0%, #0b1118 42%, #080d14 100%)",
-          backgroundColor: "#060608",
+          backgroundColor: isLightMode ? "transparent" : "#060608",
           // backgroundImage: `
           //             radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%), 
           //             radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
@@ -1609,9 +1708,11 @@ export default function AncillaryDataParser() {
                         p: 3,
                         borderRadius: 8,
                         // background: "rgba(28, 28, 30, 0.5)",
-                        background: "#302f2f42",
+                        background: isLightMode ? "rgba(255, 255, 255, 0.78)" : "#302f2f42",
                         backdropFilter: "blur(20px)",
-                        border: "1px solid rgba(255,255,255,0.1)",
+                        border: isLightMode
+                          ? "1px solid rgba(15, 23, 42, 0.12)"
+                          : "1px solid rgba(255,255,255,0.1)",
                       }}
                     >
                       <Box
@@ -1622,7 +1723,7 @@ export default function AncillaryDataParser() {
                           alignItems: "center",
                         }}
                       >
-                        <Typography variant="h6" color="white">
+                        <Typography variant="h6" color={isLightMode ? "#0f172a" : "white"}>
                           Configuration
                         </Typography>
                         <Box
@@ -1643,9 +1744,18 @@ export default function AncillaryDataParser() {
                             size="small"
                             startIcon={<CloudUpload />}
                             sx={{
-                              borderColor: "rgba(255,255,255,0.2)",
-                              color: "white",
-                              "&:hover": { borderColor: "white" },
+                              borderColor: isLightMode
+                                ? "rgba(15, 23, 42, 0.22)"
+                                : "rgba(255,255,255,0.2)",
+                              color: isLightMode ? "#0f172a" : "white",
+                              "&:hover": {
+                                borderColor: isLightMode
+                                  ? "rgba(15, 23, 42, 0.42)"
+                                  : "white",
+                                background: isLightMode
+                                  ? "rgba(15, 23, 42, 0.05)"
+                                  : "rgba(255,255,255,0.06)",
+                              },
                             }}
                           >
                             Add Files
@@ -1699,7 +1809,7 @@ export default function AncillaryDataParser() {
                         >
                           <Typography
                             sx={{
-                              color: "rgba(255,255,255,0.7)",
+                              color: isLightMode ? "rgba(15, 23, 42, 0.7)" : "rgba(255,255,255,0.7)",
                               fontWeight: 700,
                               fontSize: "0.85rem",
                               letterSpacing: "0.04em",
@@ -1714,15 +1824,19 @@ export default function AncillaryDataParser() {
                             sx={{
                               height: 24,
                               fontSize: "0.7rem",
-                              background: "rgba(255,255,255,0.06)",
-                              color: "rgba(255,255,255,0.7)",
-                              border: "1px solid rgba(255,255,255,0.08)",
+                              background: isLightMode
+                                ? "rgba(15, 23, 42, 0.06)"
+                                : "rgba(255,255,255,0.06)",
+                              color: isLightMode ? "rgba(15, 23, 42, 0.75)" : "rgba(255,255,255,0.7)",
+                              border: isLightMode
+                                ? "1px solid rgba(15, 23, 42, 0.12)"
+                                : "1px solid rgba(255,255,255,0.08)",
                             }}
                           />
                         </Box>
                         <Typography
                           sx={{
-                            color: "rgba(255,255,255,0.45)",
+                            color: isLightMode ? "rgba(15, 23, 42, 0.55)" : "rgba(255,255,255,0.45)",
                             fontSize: "0.75rem",
                           }}
                         >
@@ -1742,13 +1856,13 @@ export default function AncillaryDataParser() {
                           >
                             <Typography
                               variant="caption"
-                              sx={{ color: "rgba(255,255,255,0.6)" }}
+                              sx={{ color: isLightMode ? "rgba(15, 23, 42, 0.62)" : "rgba(255,255,255,0.6)" }}
                             >
                               Processing files
                             </Typography>
                             <Typography
                               variant="caption"
-                              sx={{ color: "rgba(255,255,255,0.6)" }}
+                              sx={{ color: isLightMode ? "rgba(15, 23, 42, 0.62)" : "rgba(255,255,255,0.6)" }}
                             >
                               {`${Math.round(Number(progress || 0))}%`}
                             </Typography>
@@ -1832,13 +1946,17 @@ export default function AncillaryDataParser() {
                                 },
                                 processing: {
                                   label: "Processing",
-                                  color: "#f1f2f5",
+                                  color: isLightMode ? "#1d4ed8" : "#f1f2f5",
                                   bg: "rgba(59, 130, 246, 0.12)",
                                 },
                                 loading: {
                                   label: "Loading",
-                                  color: "rgba(255,255,255,0.7)",
-                                  bg: "rgba(255,255,255,0.08)",
+                                  color: isLightMode
+                                    ? "rgba(15,23,42,0.75)"
+                                    : "rgba(255,255,255,0.7)",
+                                  bg: isLightMode
+                                    ? "rgba(15,23,42,0.06)"
+                                    : "rgba(255,255,255,0.08)",
                                 },
                                 error: {
                                   label: "Error",
@@ -1847,8 +1965,12 @@ export default function AncillaryDataParser() {
                                 },
                                 pending: {
                                   label: "Ready",
-                                  color: "rgba(255,255,255,0.7)",
-                                  bg: "rgba(255,255,255,0.08)",
+                                  color: isLightMode
+                                    ? "rgba(15,23,42,0.75)"
+                                    : "rgba(255,255,255,0.7)",
+                                  bg: isLightMode
+                                    ? "rgba(15,23,42,0.06)"
+                                    : "rgba(255,255,255,0.08)",
                                 },
                               }[f.status || "pending"];
 
@@ -1876,11 +1998,15 @@ export default function AncillaryDataParser() {
                                     background:
                                       selectedPreviewId === f.id
                                         ? "linear-gradient(90deg, rgba(16, 185, 30, 0.31), rgba(16, 185, 129, 0.02))"
-                                        : "rgba(25, 28, 31, 0.4)",
+                                        : isLightMode
+                                          ? "rgba(255, 255, 255, 0.66)"
+                                          : "rgba(25, 28, 31, 0.4)",
                                     border:
                                       selectedPreviewId === f.id
                                         ? "1px solid rgba(16, 185, 129, 0.45)"
-                                        : "1px solid rgba(255,255,255,0.08)",
+                                        : isLightMode
+                                          ? "1px solid rgba(15,23,42,0.12)"
+                                          : "1px solid rgba(255,255,255,0.08)",
                                     borderRadius: 8,
                                     mb: 0.5,
                                     // boxShadow:
@@ -1889,8 +2015,12 @@ export default function AncillaryDataParser() {
                                     //     : "none",
                                     transition: "all 0.2s ease",
                                     "&:hover": {
-                                      background: "rgba(255,255,255,0.06)",
-                                      borderColor: "rgba(255,255,255,0.2)",
+                                      background: isLightMode
+                                        ? "rgba(59,130,246,0.08)"
+                                        : "rgba(255,255,255,0.06)",
+                                      borderColor: isLightMode
+                                        ? "rgba(59,130,246,0.3)"
+                                        : "rgba(255,255,255,0.2)",
                                     },
                                   }}
                                 >
@@ -1940,7 +2070,7 @@ export default function AncillaryDataParser() {
                                     >
                                       <Typography
                                         sx={{
-                                          color: "white",
+                                          color: isLightMode ? "#0f172a" : "white",
                                           fontSize: 12,
                                           fontWeight: 700,
                                           whiteSpace: "nowrap",
@@ -1977,7 +2107,11 @@ export default function AncillaryDataParser() {
                                     ) : (
                                       <Typography
                                         variant="caption"
-                                        sx={{ color: "rgba(255,255,255,0.6)" }}
+                                        sx={{
+                                          color: isLightMode
+                                            ? "rgba(15,23,42,0.62)"
+                                            : "rgba(255,255,255,0.6)",
+                                        }}
                                       >
                                         {f.status === "done"
                                           ? "Parsed Successfully"
@@ -2132,6 +2266,7 @@ export default function AncillaryDataParser() {
                                               fontWeight: 700,
                                               letterSpacing: "0.08em",
                                               color: "#ffffff",
+                                              color: isLightMode ? "#0f172a" : "#ffffff",
                                             },
                                             "& .MuiOutlinedInput-notchedOutline":
                                             {
@@ -2160,10 +2295,16 @@ export default function AncillaryDataParser() {
                                         removeFile(f.id);
                                       }}
                                       sx={{
-                                        color: "rgba(255,255,255,0.35)",
-                                        background: "rgba(255,255,255,0.04)",
+                                        color: isLightMode
+                                          ? "rgba(15,23,42,0.55)"
+                                          : "rgba(255,255,255,0.35)",
+                                        background: isLightMode
+                                          ? "rgba(15,23,42,0.04)"
+                                          : "rgba(255,255,255,0.04)",
                                         border:
-                                          "1px solid rgba(255,255,255,0.08)",
+                                          isLightMode
+                                            ? "1px solid rgba(15,23,42,0.12)"
+                                            : "1px solid rgba(255,255,255,0.08)",
                                         "&:hover": {
                                           color: "#ef4444",
                                           borderColor: "rgba(239, 68, 68, 0.4)",
@@ -2189,8 +2330,12 @@ export default function AncillaryDataParser() {
                               height: "100%",
                               p: 2,
                               borderRadius: 4,
-                              background: "rgba(0, 0, 0, 0.19)",
-                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              background: isLightMode
+                                ? "rgba(255, 255, 255, 0.76)"
+                                : "rgba(0, 0, 0, 0.19)",
+                              border: isLightMode
+                                ? "1px solid rgba(15, 23, 42, 0.12)"
+                                : '1px solid rgba(255, 255, 255, 0.08)',
                               display: "flex",
                               flexDirection: "column",
                               gap: 1.5,
@@ -2205,13 +2350,13 @@ export default function AncillaryDataParser() {
                             >
                               <Box>
                                 <Typography
-                                  sx={{ color: "white", fontWeight: 700 }}
+                                  sx={{ color: isLightMode ? "#0f172a" : "white", fontWeight: 700 }}
                                 >
                                   File Preview
                                 </Typography>
                                 <Typography
                                   variant="caption"
-                                  sx={{ color: "rgba(255,255,255,0.5)" }}
+                                  sx={{ color: isLightMode ? "rgba(15, 23, 42, 0.55)" : "rgba(255,255,255,0.5)" }}
                                 >
                                   {selectedPreviewId
                                     ? uploadedFiles.find(
@@ -2243,7 +2388,9 @@ export default function AncillaryDataParser() {
                                     <Typography
                                       variant="caption"
                                       sx={{
-                                        color: "rgba(255,255,255,0.7)",
+                                        color: isLightMode
+                                          ? "rgba(30,41,59,0.8)"
+                                          : "rgba(255,255,255,0.7)",
                                         fontWeight: 600,
                                       }}
                                     >
@@ -2274,7 +2421,11 @@ export default function AncillaryDataParser() {
                                     />
                                     <Typography
                                       variant="caption"
-                                      sx={{ color: "rgba(255,255,255,0.6)" }}
+                                      sx={{
+                                        color: isLightMode
+                                          ? "rgba(30,41,59,0.7)"
+                                          : "rgba(255,255,255,0.6)",
+                                      }}
                                     >
                                       Loading
                                     </Typography>
@@ -2297,6 +2448,9 @@ export default function AncillaryDataParser() {
                                   alignItems: "center",
                                   justifyContent: "center",
                                   color: "rgba(255,255,255,0.45)",
+                                  color: isLightMode
+                                    ? "rgba(15,23,42,0.52)"
+                                    : "rgba(255,255,255,0.45)",
                                 }}
                               >
                                 <Typography variant="body2">
@@ -2331,7 +2485,9 @@ export default function AncillaryDataParser() {
                                     <Typography
                                       variant="caption"
                                       sx={{
-                                        color: "rgba(255,255,255,0.6)",
+                                        color: isLightMode
+                                          ? "rgba(15,23,42,0.62)"
+                                          : "rgba(255,255,255,0.6)",
                                         fontWeight: 600,
                                       }}
                                     >
@@ -2339,7 +2495,7 @@ export default function AncillaryDataParser() {
                                     </Typography>
                                     <Typography
                                       sx={{
-                                        color: "#fff",
+                                        color: isLightMode ? "#0f172a" : "#fff",
                                         fontWeight: 700,
                                         fontSize: "0.95rem",
                                       }}
@@ -2360,39 +2516,55 @@ export default function AncillaryDataParser() {
                                     density="compact"
                                     checkboxSelection
                                     disableRowSelectionOnClick
-                                    // hideFooter
+                                    getRowId={(row) => row.id ?? `${row.uid || "row"}-${Math.random()}`}
                                     sx={{
                                       // height: '100%',
-                                      background: "rgba(12, 14, 18, 0.66)",
+                                      background: isLightMode
+                                        ? "rgba(255, 255, 255, 0.94)"
+                                        : "rgba(12, 14, 18, 0.66)",
                                       border: "none",
-                                      color: "#fff",
+                                      color: isLightMode ? "#0f172a" : "#fff",
                                       backdropFilter: "blur(16px) ",
                                       "& .MuiDataGrid-cell": {
                                         borderBottom:
-                                          "1px solid rgba(255, 255, 255, 0.05)",
+                                          isLightMode
+                                            ? "1px solid rgba(148, 163, 184, 0.22)"
+                                            : "1px solid rgba(255, 255, 255, 0.05)",
                                       },
                                       "& .MuiDataGrid-columnHeaders": {
                                         background:
-                                          "rgb(0, 0, 0)",
+                                          isLightMode
+                                            ? "rgba(241, 245, 249, 0.96)"
+                                            : "rgb(0, 0, 0)",
                                         backdropFilter: "blur(16px) ",
                                         borderBottom:
-                                          "1px solid rgba(255, 255, 255, 0.16)",
+                                          isLightMode
+                                            ? "1px solid rgba(148, 163, 184, 0.35)"
+                                            : "1px solid rgba(255, 255, 255, 0.16)",
                                         fontWeight: 700,
                                       },
                                       "& .MuiDataGrid-pinnedColumnHeaders": {
-                                        background: "rgba(6, 8, 12, 0.85)",
+                                        background: isLightMode
+                                          ? "rgba(248, 250, 252, 0.98)"
+                                          : "rgba(6, 8, 12, 0.85)",
                                         backdropFilter: "blur(18px) saturate(160%)",
                                       },
                                       "& .MuiDataGrid-pinnedColumns": {
-                                        background: "rgba(6, 8, 12, 0.82)",
+                                        background: isLightMode
+                                          ? "rgba(248, 250, 252, 0.98)"
+                                          : "rgba(6, 8, 12, 0.82)",
                                         backdropFilter: "blur(18px) saturate(160%)",
                                       },
                                       "& .MuiDataGrid-cell--pinnedLeft": {
-                                        background: "rgba(6, 8, 12, 0.78)",
+                                        background: isLightMode
+                                          ? "rgba(241, 245, 249, 0.96)"
+                                          : "rgba(6, 8, 12, 0.78)",
                                         backdropFilter: "blur(18px) saturate(160%)",
                                       },
                                       "& .MuiDataGrid-row:hover": {
-                                        background: "rgba(255, 255, 255, 0.04)",
+                                        background: isLightMode
+                                          ? "rgba(59, 130, 246, 0.08)"
+                                          : "rgba(255, 255, 255, 0.04)",
                                       },
                                     }}
                                   />
@@ -2577,14 +2749,24 @@ export default function AncillaryDataParser() {
                     width: { xs: "100%", md: 420 },
                     "& .MuiInputBase-root": {
                       borderRadius: 999,
-                      background: "rgba(0, 0, 0, 0.7)",
-                      border: "1px solid rgba(255,255,255,0.14)",
+                      background: isLightMode
+                        ? "rgba(255, 255, 255, 0.88)"
+                        : "rgba(0, 0, 0, 0.7)",
+                      border: isLightMode
+                        ? "1px solid rgba(15, 23, 42, 0.14)"
+                        : "1px solid rgba(255,255,255,0.14)",
                     },
                   }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search sx={{ color: "rgba(229,231,235,0.7)" }} />
+                        <Search
+                          sx={{
+                            color: isLightMode
+                              ? "rgba(15,23,42,0.6)"
+                              : "rgba(229,231,235,0.7)",
+                          }}
+                        />
                       </InputAdornment>
                     ),
                     endAdornment: searchQuery ? (
@@ -2633,13 +2815,19 @@ export default function AncillaryDataParser() {
                             minHeight: 32,
                             color: isActive
                               ? "#0a0a0a"
-                              : "rgba(255,255,255,0.75)",
+                              : isLightMode
+                                ? "rgba(15,23,42,0.8)"
+                                : "rgba(255,255,255,0.75)",
                             background: isActive
                               ? "linear-gradient(135deg, #10b981 0%, #34d399 100%)"
-                              : "rgba(13, 22, 39, 0.45)",
+                              : isLightMode
+                                ? "rgba(255,255,255,0.86)"
+                                : "rgba(13, 22, 39, 0.45)",
                             border: isActive
                               ? "1px solid rgba(16, 185, 129, 0.65)"
-                              : "1px solid rgba(255,255,255,0.08)",
+                              : isLightMode
+                                ? "1px solid rgba(15,23,42,0.14)"
+                                : "1px solid rgba(255,255,255,0.08)",
                             boxShadow: isActive
                               ? "0 6px 18px rgba(16, 185, 129, 0.25)"
                               : "none",
@@ -2647,10 +2835,14 @@ export default function AncillaryDataParser() {
                             "&:hover": {
                               background: isActive
                                 ? "linear-gradient(135deg, #10b981 0%, #10b981 100%)"
-                                : "rgba(255,255,255,0.12)",
+                                : isLightMode
+                                  ? "rgba(59,130,246,0.08)"
+                                  : "rgba(255,255,255,0.12)",
                               borderColor: isActive
                                 ? "rgba(16, 185, 129, 0.8)"
-                                : "rgba(255,255,255,0.18)",
+                                : isLightMode
+                                  ? "rgba(59,130,246,0.32)"
+                                  : "rgba(255,255,255,0.18)",
                             },
                           }}
                         >
@@ -2678,20 +2870,28 @@ export default function AncillaryDataParser() {
                       minHeight: 32,
                       color: showMissingDataOnly
                         ? "#0a0a0a"
-                        : "rgba(255,255,255,0.8)",
+                        : isLightMode
+                          ? "rgba(15,23,42,0.82)"
+                          : "rgba(255,255,255,0.8)",
                       background: showMissingDataOnly
                         ? "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)"
-                        : "rgba(13, 22, 39, 0.45)",
+                        : isLightMode
+                          ? "rgba(255,255,255,0.86)"
+                          : "rgba(13, 22, 39, 0.45)",
                       border: showMissingDataOnly
                         ? "1px solid rgba(245, 158, 11, 0.8)"
-                        : "1px solid rgba(255,255,255,0.12)",
+                        : isLightMode
+                          ? "1px solid rgba(15,23,42,0.14)"
+                          : "1px solid rgba(255,255,255,0.12)",
                       boxShadow: showMissingDataOnly
                         ? "0 6px 18px rgba(245, 158, 11, 0.26)"
                         : "none",
                       "&:hover": {
                         background: showMissingDataOnly
                           ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                          : "rgba(255,255,255,0.12)",
+                          : isLightMode
+                            ? "rgba(59,130,246,0.08)"
+                            : "rgba(255,255,255,0.12)",
                       },
                     }}
                   >
@@ -2707,10 +2907,12 @@ export default function AncillaryDataParser() {
                  height: `calc(100vh - 390px)`,
                 //  height: `700px`,
                   borderRadius: 5,
-                  background: "rgba(12, 14, 18, 0.6)",
+                  background: panelBackground,
                   backdropFilter: "blur(24px) saturate(150%)",
-                  border: "1px solid rgba(255, 255, 255, 0.16)",
-                  boxShadow: "0 24px 70px rgba(0, 0, 0, 0.5)",
+                  border: panelBorder,
+                  boxShadow: isLightMode
+                    ? "0 24px 70px rgba(15, 23, 42, 0.12)"
+                    : "0 24px 70px rgba(0, 0, 0, 0.5)",
                   overflow: "hidden",
 
                 }}
@@ -2723,7 +2925,7 @@ export default function AncillaryDataParser() {
                   disableRowSelectionOnClick
                   density="compact"
                   label={
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: showMissingDataOnly ? "rgb(253, 198, 15)" : activeMUIGridHeader.color || "rgba(255,255,255,0.7)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, color: showMissingDataOnly ? "rgb(253, 198, 15)" : activeMUIGridHeader.color }}>
                        {showMissingDataOnly ? "Missing Data - " : <>{activeMUIGridHeader.icon}{tabConfig[activeTab].label}</>} MediExtract - Personic health
                     </div>
                   }
@@ -2744,31 +2946,43 @@ export default function AncillaryDataParser() {
                   }}
                   sx={{
                     border: "none",
-                    background:"#131313",
-                    color: "#e5e7eb",
+                    background: isLightMode ? "rgba(255, 255, 255, 0.92)" : "#131313",
+                    color: isLightMode ? "#0f172a" : "#e5e7eb",
                     "& .MuiDataGrid-columnHeaders": {
-                      background: "rgb(8, 3, 3)",
-                      borderBottom: "1px solid rgba(29, 27, 27, 0.45)",
+                      background: isLightMode ? "rgba(241, 245, 249, 0.96)" : "rgb(8, 3, 3)",
+                      borderBottom: isLightMode
+                        ? "1px solid rgba(148, 163, 184, 0.35)"
+                        : "1px solid rgba(29, 27, 27, 0.45)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-pinnedColumnHeaders": {
-                      background: "rgba(6, 8, 12, 0.85)",
+                      background: isLightMode
+                        ? "rgba(248, 250, 252, 0.98)"
+                        : "rgba(6, 8, 12, 0.85)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-pinnedColumns": {
-                      background: "rgba(12, 11, 6, 0.98)",
+                      background: isLightMode
+                        ? "rgba(248, 250, 252, 0.98)"
+                        : "rgba(12, 11, 6, 0.98)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-cell--pinnedLeft": {
-                      background: "rgba(6, 8, 12, 0.78)",
+                      background: isLightMode
+                        ? "rgba(255, 255, 255, 0.96)"
+                        : "rgba(6, 8, 12, 0.78)",
                       backdropFilter: "blur(18px) saturate(160%)",
                     },
                     "& .MuiDataGrid-cell": {
                       borderBottom:
-                        "1px solid rgba(255, 255, 255, 0.05)",
+                        isLightMode
+                          ? "1px solid rgba(148, 163, 184, 0.22)"
+                          : "1px solid rgba(255, 255, 255, 0.05)",
                     },
                     "& .MuiDataGrid-row:hover": {
-                      background: "rgba(255, 255, 255, 0.04)",
+                      background: isLightMode
+                        ? "rgba(59, 130, 246, 0.08)"
+                        : "rgba(255, 255, 255, 0.04)",
                     },
 
                   }}

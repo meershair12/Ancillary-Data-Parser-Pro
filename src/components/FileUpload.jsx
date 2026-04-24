@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Typography, Paper, Button, LinearProgress, Stack } from '@mui/material';
+import { Box, Typography, Paper, Button, LinearProgress, Stack, useTheme } from '@mui/material';
 import { FileCheck, Upload,FileX   } from 'lucide-react';
 import { appConfig } from './appConfig';
 import { toast } from 'react-toastify';
 
 function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
+    const theme = useTheme();
+    const isLightMode = theme.palette.mode === 'light';
     const [dragActive, setDragActive] = useState(false);
     // const [fileName, setFileName] = useState(null);
 
@@ -58,7 +60,7 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     toast.warn("Maximum 20 files allowed. Only the first 20 files will be processed.", {
                         position: "top-right",
                         autoClose: 5000,
-                        theme:"dark",
+                        theme: isLightMode ? "light" : "dark",
                         hideProgressBar: false,
                         closeOnClick: true,
                         pauseOnHover: true,
@@ -75,7 +77,7 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
             }
             e.target.value = "";
         }
-    }, [onFileUpload]);
+    }, [onFileUpload, isLightMode]);
 
     return (
         <Paper
@@ -90,15 +92,25 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                 overflow: 'hidden',
                 borderRadius: '12px',
                 border: '1px dashed',
-                borderColor: error ? 'rgba(239, 68, 68, 0.2)' : dragActive ? '#10b981' : 'rgba(255, 255, 255, 0.12)',
-                backgroundColor: dragActive ? 'rgba(10, 14, 18, 0.72)' : 'rgba(8, 10, 14, 0.66)',
+                borderColor: error
+                    ? 'rgba(239, 68, 68, 0.2)'
+                    : dragActive
+                        ? '#10b981'
+                        : isLightMode
+                            ? 'rgba(15, 23, 42, 0.16)'
+                            : 'rgba(255, 255, 255, 0.12)',
+                backgroundColor: dragActive
+                    ? (isLightMode ? 'rgba(236, 253, 245, 0.85)' : 'rgba(10, 14, 18, 0.72)')
+                    : isLightMode
+                        ? 'rgba(255, 255, 255, 0.82)'
+                        : 'rgba(8, 10, 14, 0.66)',
                 backdropFilter: 'blur(26px) saturate(175%)',
                 transition: 'all 0.2s ease-in-out',
                 maxWidth: '500px', // Ideal Enterprise Width
                 mx: 'auto',
                 '&:hover': {
                     borderColor: 'rgba(16, 185, 129, 0.4)',
-                    backgroundColor: 'rgba(12, 16, 20, 0.78)',
+                    backgroundColor: isLightMode ? 'rgba(255, 255, 255, 0.92)' : 'rgba(12, 16, 20, 0.78)',
                     backdropFilter: 'blur(28px) saturate(185%)',
 
                 }
@@ -147,9 +159,21 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor:error ? 'rgba(239, 68, 68, 0.1)' : fileName ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.14)',
+                        backgroundColor:error
+                            ? 'rgba(239, 68, 68, 0.1)'
+                            : fileName
+                                ? 'rgba(16, 185, 129, 0.1)'
+                                : isLightMode
+                                    ? 'rgba(15, 23, 42, 0.08)'
+                                    : 'rgba(255, 255, 255, 0.14)',
                         border: '1px solid',
-                        borderColor: error ? 'rgba(239, 68, 68, 0.2)' : fileName ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        borderColor: error
+                            ? 'rgba(239, 68, 68, 0.2)'
+                            : fileName
+                                ? 'rgba(16, 185, 129, 0.2)'
+                                : isLightMode
+                                    ? 'rgba(15, 23, 42, 0.14)'
+                                    : 'rgba(255, 255, 255, 0.05)',
                         transition: 'all 0.2s ease-in-out',
 
                     }}
@@ -157,7 +181,11 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     {fileName ? (
                         error?<FileX  size={24} color="#ef4444" />:<FileCheck size={24} color={appConfig.color.primary} />
                     ) : (
-                        <Upload className='upload-icon' size={24} color={dragActive ? appConfig.color.primary : "#6b7280"} />
+                        <Upload
+                            className='upload-icon'
+                            size={24}
+                            color={dragActive ? appConfig.color.primary : (isLightMode ? '#64748b' : '#6b7280')}
+                        />
                     )}
                 </Box>
 
@@ -166,7 +194,7 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     <Typography
                         title={fileName ? fileName : "Upload Files Here"}
                         sx={{
-                            color: '#f3f4f6',
+                            color: isLightMode ? '#0f172a' : '#f3f4f6',
                             fontWeight: 600,
                             fontSize: '0.875rem',
                             overflow: 'hidden',
@@ -178,7 +206,13 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     >
                         {fileName ? fileName : "Upload Files Here"}
                     </Typography>
-                    <Typography sx={{ color: error ? '#ef4444' : '#6b7280', fontSize: '0.75rem', mt: 0.2 }}>
+                    <Typography
+                        sx={{
+                            color: error ? '#ef4444' : (isLightMode ? '#64748b' : '#6b7280'),
+                            fontSize: '0.75rem',
+                            mt: 0.2
+                        }}
+                    >
                         {error ? "File couldn't be processed" : fileName ? "File ready for parsing" : "Drag and drop or browse .xlsx (Multiple files support)"}
                     </Typography>
                 </Box>
@@ -192,13 +226,15 @@ function FileUpload({ onFileUpload, loading, fileName, setFileName, error }) {
                     sx={{
                         borderRadius: '6px',
                         textTransform: 'none',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        color: '#9ca3af',
+                        borderColor: isLightMode ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.2)',
+                        color: isLightMode ? '#334155' : '#9ca3af',
                         px: 2,
                         '&:hover': {
                             borderColor: appConfig.color.primary,
                             color: appConfig.color.primary,
-                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            backgroundColor: isLightMode
+                                ? 'rgba(16, 185, 129, 0.08)'
+                                : 'rgba(16, 185, 129, 0.05)',
                         }
                     }}
                 >

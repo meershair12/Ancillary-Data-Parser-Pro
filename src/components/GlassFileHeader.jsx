@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Box, Typography, Chip, Tooltip, IconButton } from '@mui/material';
+import { Paper, Box, Typography, Chip, Tooltip, IconButton, useTheme } from '@mui/material';
 import { Description, CheckCircle, Refresh, Delete } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { appConfig } from './appConfig';
@@ -37,6 +37,9 @@ const itemVariants = {
 };
 
 const GlassFileHeader = ({ fileName, handleReset }) => {
+  const theme = useTheme();
+  const isLightMode = theme.palette.mode === 'light';
+
   return (
     <motion.div
       variants={containerVariants}
@@ -50,12 +53,16 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
         sx={{
           mb: 2,
           p: 2.5,
-          background: 'rgba(28, 28, 30, 0.7)', // Darker iOS-style glass
+          background: isLightMode ? 'rgba(255, 255, 255, 0.78)' : 'rgba(28, 28, 30, 0.7)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+          border: isLightMode
+            ? '1px solid rgba(15, 23, 42, 0.14)'
+            : '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: isLightMode
+            ? '0 8px 32px 0 rgba(15, 23, 42, 0.12)'
+            : '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
           overflow: 'hidden'
         }}
       >
@@ -90,7 +97,12 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
               <motion.div variants={itemVariants}>
                 <Typography 
                   variant="h6" 
-                  sx={{ fontWeight: 700, letterSpacing: '-0.02em', mb: 0.5, color: '#ffffff' }}
+                  sx={{
+                    fontWeight: 700,
+                    letterSpacing: '-0.02em',
+                    mb: 0.5,
+                    color: isLightMode ? '#0f172a' : '#ffffff'
+                  }}
                 >
                   {fileName || "document_name.pdf"}
                 </Typography>
@@ -103,7 +115,7 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
                   label="Parsed Successfully"
                   size="small"
                   sx={{
-                    background: 'rgba(52, 211, 153, 0.12)',
+                    background: isLightMode ? 'rgba(16, 185, 129, 0.16)' : 'rgba(52, 211, 153, 0.12)',
                     color: appConfig.color.primary,
                     fontWeight: 600,
                     borderRadius: '8px',
@@ -117,14 +129,22 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
           {/* Right Side: Actions (Each button staggers in) */}
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             {[
-              { icon: <Refresh fontSize="small" />, title: "Refresh", color: '#ffffff', bg: 'rgba(255,255,255,0.1)' },
+              {
+                icon: <Refresh fontSize="small" />,
+                title: "Refresh",
+                color: isLightMode ? '#0f172a' : '#ffffff',
+                bg: isLightMode ? 'rgba(15,23,42,0.08)' : 'rgba(255,255,255,0.1)'
+              },
               { icon: <Delete fontSize="small" />, title: "Delete", color: '#ff453a', bg: 'rgba(255, 69, 58, 0.15)' }
             ].map((action, index) => (
               <motion.div key={index} variants={itemVariants}>
                 <Tooltip title={action.title} arrow>
                   <IconButton
                     component={motion.button}
-                    whileHover={{ scale: 1.15, backgroundColor: 'rgba(255,255,255,0.2)' }}
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: isLightMode ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.2)'
+                    }}
                     whileTap={{ scale: 0.9 }}
                     onClick={handleReset}
                     sx={{
@@ -132,7 +152,9 @@ const GlassFileHeader = ({ fileName, handleReset }) => {
                       color: action.color,
                       borderRadius: '14px',
                       p: 1.2,
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      border: isLightMode
+                        ? '1px solid rgba(15,23,42,0.14)'
+                        : '1px solid rgba(255, 255, 255, 0.05)',
                       transition: 'all 0.2s',
                     }}
                   >
